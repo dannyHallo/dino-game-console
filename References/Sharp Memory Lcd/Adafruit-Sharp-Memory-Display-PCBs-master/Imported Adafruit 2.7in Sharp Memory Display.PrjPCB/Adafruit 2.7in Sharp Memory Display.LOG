@@ -1,0 +1,27 @@
+Importer Log Report
+Project : Adafruit 2.7in Sharp Memory Display.PrjPCB
+
+Section : Analyze Document - C:\Users\Administrator\Downloads\Adafruit-Sharp-Memory-Display-PCBs-master\Adafruit 2.7in Sharp Memory Display.sch
+    Analyzing data of C:\Users\Administrator\Downloads\Adafruit-Sharp-Memory-Display-PCBs-master\Adafruit 2.7in Sharp Memory Display.sch
+    Load settings
+    Load layers 177
+    Load schematic
+    Load Libraries 3
+    Load Library "microbuilder"
+    Load Packages 38
+    Load Symbols 13
+    Load DeviceSets 12
+    Load Library "adafruit_power"
+    Load Packages 1
+    Load Symbols 6
+    Load DeviceSets 6
+    Load Library "adafruit_display"
+    Load Packages 2
+    Load Symbols 1
+    Load DeviceSets 1
+    Load Attributes 4
+    Load Classes 1
+    Load Parts 55
+    Load Sheets 1
+    ERROR: Unhandled typeerrors
+EndSection
