@@ -8,7 +8,6 @@
  */
 
 #include "LS013B4DN04.h"
-//#include "font8x8_basic.h"
 #include <string.h>
 #include <stdlib.h>
 #include <math.h>
