@@ -2,14 +2,16 @@
  * LS013B4DN04.c
  *
  *  Created on: Apr 8, 2022
- *      Author: TinLethax (Thipok Jiamjarapan), DannyHallo
- *      Github: https://github.com/TiNredmc/SharpMEMDisp/blob/master/Core/Src/LS027B7DH01.c
+ *      Author: TinLethax (Thipok Jiamjarapan) (2020)
+ *      Minor modifications made by DannyHallo
+ *      Original version: https://github.com/TiNredmc/SharpMEMDisp/blob/master/Core/Src/LS027B7DH01.c
  */
 
 #include "LS013B4DN04.h"
 //#include "font8x8_basic.h"
 #include <string.h>
 #include <stdlib.h>
+#include <math.h>
 
 //Display Commands
 uint8_t clearCMD[2] = { 0x20, 0x00 }; // Display Clear 0x04 (HW_LSB)
@@ -33,35 +35,9 @@ uint8_t smallRbit(uint8_t re) {
 	return (uint8_t) (__RBIT(re) >> 24);
 }
 
-//// Display Initialization
-//void LCD_Init(LS013B4DN04 *MemDisp, SPI_HandleTypeDef *Bus,
-//		GPIO_TypeDef *dispGPIO,uint16_t LCDcs,uint16_t LCDon,
-//		TIM_HandleTypeDef *TimerX, uint32_t COMpwm){
-//
-//	//Store params into our struct
-//	MemDisp->Bus = Bus;
-//	MemDisp->dispGPIO = dispGPIO;
-//	MemDisp->TimerX = TimerX;
-//	MemDisp->COMpwm = COMpwm;
-//	MemDisp->LCDcs = LCDcs;
-//	MemDisp->LCDon = LCDon;
-//
-//	DispBuf = malloc(1152);
-//	memset(DispBuf, 0xFF, 1152);
-//
-//	HAL_GPIO_WritePin(MemDisp->dispGPIO,MemDisp->LCDon,GPIO_PIN_SET);// Turn display back on
-//	//Start 50Hz PWM for COM inversion of the display
-//	HAL_TIM_PWM_Start(MemDisp->TimerX,MemDisp->COMpwm);
-//	MemDisp->TimerX->Instance->CCR1 = 5;
-//
-//
-//	//At lease 3 + 13 clock is needed for Display clear (16 Clock = 8x2 bit = 2 byte)
-//	HAL_GPIO_WritePin(MemDisp->dispGPIO,MemDisp->LCDcs,GPIO_PIN_SET);
-//	HAL_SPI_Transmit(MemDisp->Bus, (uint8_t *)clearCMD, 2,150); //According to Datasheet
-//	HAL_GPIO_WritePin(MemDisp->dispGPIO,MemDisp->LCDcs,GPIO_PIN_RESET);
-//
-//
-//}
+int modulo(int x,int N){
+    return (x % N + N) %N;
+}
 
 // Display Initialization
 void LCD_Init(LS013B4DN04 *MemDisp, SPI_HandleTypeDef *Bus,
@@ -131,21 +107,27 @@ void LCD_LoadFull(uint8_t *BMP) {
 }
 
 // Buffer update (with X,Y Coordinate and image WxH) X,Y Coordinate start at (0,0) to (12,96)
-void LCD_LoadPart(uint8_t *BMP, uint8_t Xcord, uint8_t Ycord, uint8_t bmpW,
-		uint8_t bmpH, bool toggle) {
+void LCD_LoadPart(uint8_t *BMP, int Xcord, uint8_t Ycord, uint8_t bmpW,
+		uint8_t bmpH, uint8_t drawMode, uint8_t repeatMode) {
 
 	uint8_t displayRow = 0;
 	uint16_t displayRowOffset = 0;
 
 	//Counting from Y origin point to bmpH using for loop
 	for (uint8_t y = 0; y < bmpH; y++) {
-		displayRow = (Ycord + y) % 96;
+		displayRow = Ycord + y;
+		if ((repeatMode == REPEATMODE_NONE)
+				&& (displayRow < 0 || displayRow >= 96)) {
+			continue;
+		}
+		displayRow %= 96;
 		displayRowOffset = displayRow * 12;
 
-		uint8_t firstXByte = Xcord / 8;
-		uint8_t leftOffset = Xcord % 8;
+		int firstXByte = floor((float)Xcord / 8);
+		uint8_t leftOffset = modulo(Xcord, 8);
 
 		uint8_t v1, v2 = 0x00;
+		uint8_t *currentEditingBuf;
 
 		for (uint8_t j = 0; j < bmpW + 1; j++) {
 			if (j == bmpW)
@@ -153,12 +135,28 @@ void LCD_LoadPart(uint8_t *BMP, uint8_t Xcord, uint8_t Ycord, uint8_t bmpW,
 			else
 				v2 = *(BMP + bmpW * y + j);
 
-			if (toggle) {
-				*(DispBuf + displayRowOffset + (firstXByte + j) % 12) ^= ((v1
-						<< (8 - leftOffset)) | (v2 >> leftOffset));
-			} else {
-				*(DispBuf + displayRowOffset + (firstXByte + j) % 12) |= ((v1
-						<< (8 - leftOffset)) | (v2 >> leftOffset));
+			if (repeatMode == REPEATMODE_NONE
+					&& (firstXByte + j < 0 || firstXByte + j > 11)) {
+				v1 = v2;
+				continue;
+			}
+
+			currentEditingBuf = DispBuf + displayRowOffset
+					+ (firstXByte + j) % 12;
+
+			switch (drawMode) {
+			case DRAWMODE_ADD:
+				*currentEditingBuf |= ((v1 << (8 - leftOffset))
+						| (v2 >> leftOffset));
+				break;
+			case DRAWMODE_CULL:
+				*currentEditingBuf &= ~((v1 << (8 - leftOffset))
+						| (v2 >> leftOffset));
+				break;
+			case DRAWMODE_TOGGLE:
+				*currentEditingBuf ^= ((v1 << (8 - leftOffset))
+						| (v2 >> leftOffset));
+				break;
 			}
 
 			v1 = v2;
@@ -166,19 +164,27 @@ void LCD_LoadPart(uint8_t *BMP, uint8_t Xcord, uint8_t Ycord, uint8_t bmpW,
 	}
 }
 
-void LCD_DrawLine(uint8_t startingRow, uint8_t startingPoint, uint8_t length, bool negative) {
+void LCD_DrawLine(uint8_t startingRow, int startingPoint, uint8_t length,
+		uint8_t drawMode) {
 	uint16_t rowOffset = (startingRow % 96) * 12;
 
 	for (uint8_t j = 0; j < length; j++) {
+		if(startingPoint + j < 0)
+			continue;
 		uint8_t additionalOffset = ((startingPoint + j) % 96) / 8;
-		if(negative){
-			*(DispBuf + rowOffset + additionalOffset) &= ~(0x80
-							>> ((startingPoint + j) % 8));
-		}else{
-			*(DispBuf + rowOffset + additionalOffset) |= (0x80
-				>> ((startingPoint + j) % 8));
-		}
 
+		uint8_t *currentEditingBuf = DispBuf + rowOffset + additionalOffset;
+		switch (drawMode) {
+		case DRAWMODE_ADD:
+			*currentEditingBuf |= (0x80 >> ((startingPoint + j) % 8));
+			break;
+		case DRAWMODE_CULL:
+			*currentEditingBuf &= ~(0x80 >> ((startingPoint + j) % 8));
+			break;
+		case DRAWMODE_TOGGLE:
+			*currentEditingBuf ^= (0x80 >> ((startingPoint + j) % 8));
+			break;
+		}
 	}
 }
 

@@ -60,8 +60,8 @@ all: main-build
 main-build: ScreenTest.elf secondary-outputs
 
 # Tool invocations
-ScreenTest.elf ScreenTest.map: $(OBJS) $(USER_OBJS) E:\STM32CubeIDE\STM32F103CBUX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "ScreenTest.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m3 -T"E:\STM32CubeIDE\STM32F103CBUX_FLASH.ld" --specs=nosys.specs -Wl,-Map="ScreenTest.map" -Wl,--gc-sections -static --specs=nano.specs -mfloat-abi=soft -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+ScreenTest.elf ScreenTest.map: $(OBJS) $(USER_OBJS) C:\Users\Administrator\Desktop\Dino\Code\STM32F103CBUX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "ScreenTest.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m3 -T"C:\Users\Administrator\Desktop\Dino\Code\STM32F103CBUX_FLASH.ld" --specs=nosys.specs -Wl,-Map="ScreenTest.map" -Wl,--gc-sections -static --specs=nano.specs -mfloat-abi=soft -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 

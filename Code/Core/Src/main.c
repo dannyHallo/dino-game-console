@@ -24,7 +24,7 @@
 #include "LS013B4DN04.h"
 #include "image.h"
 #include <stdlib.h>
-//#include <math.h>
+#include <math.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -54,6 +54,7 @@
 
 /* Private variables ---------------------------------------------------------*/
 SPI_HandleTypeDef hspi1;
+
 TIM_HandleTypeDef htim1;
 
 /* USER CODE BEGIN PV */
@@ -72,7 +73,7 @@ static void MX_TIM1_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-const float JumpTickMax = 240;
+const float JumpTickMax = 70;
 const float DinoJumpHeight = 40;
 const float DinoGroundPos = 58;
 
@@ -116,13 +117,15 @@ int main(void) {
 
 	// ALL GPIO AND BUSES MUST BE INITED BEFORE CALL THIS FUNCTION
 	LCD_Init(&MemDisp, &hspi1, GPIOA, CS_Pin);
+	LCD_Fill(true);
+	LCD_Update(&MemDisp);
 
-	static uint8_t plantX, dinoX, cloudX, dinoY = 0;
+	static int plantX, dinoX, cloudX, dinoY = 0;
 	static bool isJumping = 0;
-	static float groundMovement, skyMovement = 0;
+	static float groundMovement, skyMovement = 96;
 	static uint8_t jumpTick;
 	static uint8_t dinoVerticalMovement;
-	static float overallSpeed = 1.5;
+	static float overallSpeed = 1;
 	/* USER CODE END 2 */
 
 	/* Infinite loop */
@@ -131,13 +134,13 @@ int main(void) {
 		/* USER CODE END WHILE */
 
 		/* USER CODE BEGIN 3 */
-		// Game tick
+
 		tick++;
 
-		// Speed Gredual Control
-		if (overallSpeed < 2) {
-			overallSpeed += 0.0001;
-		}
+//		 Speed Gradual Control
+//		if (overallSpeed < 1.2) {
+//			overallSpeed += 0.001;
+//		}
 
 		if (JUMP_BUTTON_PRESSED) {
 			if(!isJumping) {
@@ -165,55 +168,60 @@ int main(void) {
 			dinoVerticalMovement = DinoGroundPos;
 		}
 
-		groundMovement += 0.25 * overallSpeed;
-		skyMovement += 0.05 * overallSpeed;
+		groundMovement -= 0.7 * overallSpeed;
+		skyMovement -= 0.1 * overallSpeed;
 
-		plantX = (int) (96 - groundMovement);
+		plantX = floor(groundMovement);
 		dinoX = (int) 4;
-		cloudX = (int) (96 - skyMovement);
+		cloudX = floor(skyMovement);
 		dinoY = dinoVerticalMovement;
 
-		if (groundMovement >= 96)
-			groundMovement = 0;
-		if (skyMovement >= 96)
-			skyMovement = 0;
+		if (groundMovement < -20)
+			groundMovement = 96;
+		if (skyMovement < -60)
+			skyMovement = 96;
 
 		// Reset canvas
 		LCD_Fill(true);
-		LCD_DrawLine(77, 0, 96, false);
+		LCD_DrawLine(77, 0, 96, DRAWMODE_ADD);
 
-		// Culling masks
+		// Add culling masks
 		// Plant
-		LCD_DrawLine(77, plantX + 2, 6, true);
+		LCD_DrawLine(77, plantX + 2, 6, DRAWMODE_CULL);
 		// Dino
-		LCD_DrawLine(dinoY + 19, dinoX + 3, 10, true);
-		LCD_DrawLine(dinoY + 6, dinoX + 15, 5, true);
-
-		// Render plants
-		LCD_LoadPart((uint8_t*) Plant1, plantX, 59, 2, 22, false);
+		LCD_DrawLine(dinoY + 19, dinoX + 3, 10, DRAWMODE_CULL);
+		LCD_DrawLine(dinoY + 6, dinoX + 15, 5, DRAWMODE_CULL);
 
 		// Render fire
 		if (!isJumping) {
 			if (FIRE_BUTTON_PRESSED) {
-				LCD_LoadPart((uint8_t*) Fire[(tick / 50) % 2], 24, 52, 9, 25, false);
+				LCD_LoadPart((uint8_t*) Fire[(tick / (int)(50 / overallSpeed)) % 2], 24, 52, 9, 25, DRAWMODE_ADD, REPEATMODE_NONE);
 			}
 		}
 
 		// Render dino!
 		if (isJumping) {
-			LCD_LoadPart((uint8_t*) DinoNormalS, dinoX, dinoY, 3, 22, false);
+			LCD_LoadPart((uint8_t*) DinoNormalS, dinoX, dinoY, 3, 22,
+			DRAWMODE_ADD, REPEATMODE_NONE);
 		} else {
 			// Fire dino
 			if (FIRE_BUTTON_PRESSED) {
-				LCD_LoadPart((uint8_t*) DinoFireRunning[(tick / (int)(60 / overallSpeed)) % 2],
-						dinoX, dinoY, 3, 22, false);
+				LCD_LoadPart((uint8_t*) DinoFireRunning[(tick / (int)(30 / overallSpeed)) % 2],
+						dinoX, dinoY, 3, 22, DRAWMODE_ADD, REPEATMODE_NONE);
 			} else {
-				LCD_LoadPart((uint8_t*) DinoNormalRunning[(tick / (int)(60 / overallSpeed)) % 2],
-						dinoX, dinoY, 3, 22, false);
+				LCD_LoadPart((uint8_t*) DinoNormalRunning[(tick / (int)(30 / overallSpeed)) % 2],
+						dinoX, dinoY, 3, 22, DRAWMODE_ADD, REPEATMODE_NONE);
 			}
 		}
 
-		LCD_LoadPart((uint8_t*) Cloud, cloudX, 18, 6, 14, false);
+		// Render a piece of cloud
+		LCD_LoadPart((uint8_t*) Cloud, cloudX, 18, 6, 14, DRAWMODE_ADD,
+		REPEATMODE_NONE);
+
+		// Render plants
+		LCD_LoadPart((uint8_t*) Plant1, plantX, 59, 2, 22, DRAWMODE_ADD,
+		REPEATMODE_NONE);
+
 		LCD_Update(&MemDisp);
 	}
 	/* USER CODE END 3 */
@@ -230,13 +238,12 @@ void SystemClock_Config(void) {
 	/** Initializes the RCC Oscillators according to the specified parameters
 	 * in the RCC_OscInitTypeDef structure.
 	 */
-	RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
-	RCC_OscInitStruct.HSEState = RCC_HSE_ON;
-	RCC_OscInitStruct.HSEPredivValue = RCC_HSE_PREDIV_DIV1;
+	RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
 	RCC_OscInitStruct.HSIState = RCC_HSI_ON;
+	RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
 	RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-	RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
-	RCC_OscInitStruct.PLL.PLLMUL = RCC_PLL_MUL9;
+	RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI_DIV2;
+	RCC_OscInitStruct.PLL.PLLMUL = RCC_PLL_MUL8;
 	if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK) {
 		Error_Handler();
 	}
@@ -250,7 +257,7 @@ void SystemClock_Config(void) {
 	RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
 	RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
 
-	if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK) {
+	if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_1) != HAL_OK) {
 		Error_Handler();
 	}
 }
@@ -309,7 +316,7 @@ static void MX_TIM1_Init(void) {
 
 	/* USER CODE END TIM1_Init 1 */
 	htim1.Instance = TIM1;
-	htim1.Init.Prescaler = 6000 - 1;
+	htim1.Init.Prescaler = 1000 - 1;
 	htim1.Init.CounterMode = TIM_COUNTERMODE_UP;
 	htim1.Init.Period = 100 - 1;
 	htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
@@ -343,7 +350,6 @@ static void MX_GPIO_Init(void) {
 	GPIO_InitTypeDef GPIO_InitStruct = { 0 };
 
 	/* GPIO Ports Clock Enable */
-	__HAL_RCC_GPIOD_CLK_ENABLE();
 	__HAL_RCC_GPIOA_CLK_ENABLE();
 	__HAL_RCC_GPIOB_CLK_ENABLE();
 
