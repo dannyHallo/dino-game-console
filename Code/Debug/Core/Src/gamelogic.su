@@ -1,1 +1,5 @@
 ../Core/Src/gamelogic.c:10:6:IsOverlapping	16	static
+../Core/Src/gamelogic.c:18:6:IsFadedOutOfScene	24	static
+../Core/Src/gamelogic.c:26:6:Append	48	static
+../Core/Src/gamelogic.c:39:6:DeleteHeader	24	static
+../Core/Src/gamelogic.c:49:6:ShiftX	24	static

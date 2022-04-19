@@ -119,12 +119,18 @@ int main(void) {
 	// ALL GPIO AND BUSES MUST BE INITED BEFORE CALL THIS FUNCTION
 	LCD_Init(&MemDisp, &hspi1, GPIOA, CS_Pin);
 
-	static short plantX, dinoX, cloudX, dinoY;
-	static bool isJumping;
-	static float groundMovement, skyMovement;
+	static bool isJumping, dinoIsDead;
 	static uint8_t jumpTick;
-	static uint8_t dinoVerticalMovement;
+	static short dinoVerticalMovement;
 	static float overallSpeed;
+
+	static struct GameObj myPlant = { .bmp = (uint8_t*) Plant1, .y = 59,
+			.width = 2, .height = 22 };
+	static struct GameObj myDino = { .bmp = NULL, .x = 4, .width = 3, .height =
+			22 };
+	static struct GameObj myCloud = { .bmp = (uint8_t*) Cloud, .y = 18, .width =
+			6, .height = 14 };
+	static struct GameObj myFire = { NULL, 24, 52, 9, 25 };
 	/* USER CODE END 2 */
 
 	/* Infinite loop */
@@ -135,11 +141,15 @@ int main(void) {
 		LCD_LoadFull((uint8_t*) Title);
 		LCD_Update(&MemDisp);
 		while (!JUMP_BUTTON_PRESSED);
+		JUMP_BUTTON_PRESSED= 0;
 
-		plantX = 0, dinoX = 0, cloudX = 0, dinoY = 0;
-		isJumping = 0;
-		groundMovement = 96, skyMovement = 96;
+		isJumping = 0, dinoIsDead = 0;
+		jumpTick = 0;
 		overallSpeed = 1;
+
+		myDino.y = DinoGroundPos;
+		myPlant.x = 96;
+		myCloud.x = 96;
 
 		while (1) {
 			tick++;
@@ -152,11 +162,11 @@ int main(void) {
 			if (JUMP_BUTTON_PRESSED) {
 				if(!isJumping) {
 					isJumping = 1;
-				} else {
-					JUMP_BUTTON_PRESSED = 0;
 				}
+				JUMP_BUTTON_PRESSED = 0;
 			}
 
+			dinoVerticalMovement = DinoGroundPos;
 			if (isJumping) {
 				if (jumpTick < JumpTickMax / overallSpeed - 1) {
 					jumpTick++;
@@ -169,24 +179,12 @@ int main(void) {
 				} else {
 					isJumping = 0;
 					jumpTick = 0;
-					dinoVerticalMovement = DinoGroundPos;
 				}
-			} else {
-				dinoVerticalMovement = DinoGroundPos;
 			}
 
-			groundMovement -= 0.8 * overallSpeed;
-			skyMovement -= 0.1 * overallSpeed;
-
-			plantX = floor(groundMovement);
-			dinoX = (int) 4;
-			cloudX = floor(skyMovement);
-			dinoY = dinoVerticalMovement;
-
-			if (groundMovement < -20)
-				groundMovement = 96;
-			if (skyMovement < -60)
-				skyMovement = 96;
+			ShiftX(&myPlant, -0.8 * overallSpeed);
+			ShiftX(&myCloud, -0.1 * overallSpeed);
+			myDino.y = dinoVerticalMovement;
 
 			// Reset canvas
 			LCD_Fill(true);
@@ -194,51 +192,62 @@ int main(void) {
 
 			// Add culling masks
 			// Plant
-			LCD_DrawLine(77, plantX + 2, 6, DRAWMODE_CULL);
+			LCD_DrawLine(77, myPlant.x + 2, 6, DRAWMODE_CULL);
 			// Dino
-			LCD_DrawLine(dinoY + 19, dinoX + 3, 10, DRAWMODE_CULL);
-			LCD_DrawLine(dinoY + 6, dinoX + 15, 5, DRAWMODE_CULL);
+			LCD_DrawLine(myDino.y + 19, myDino.x + 3, 10, DRAWMODE_CULL);
+			LCD_DrawLine(myDino.y + 6, myDino.x + 15, 5, DRAWMODE_CULL);
 
 			// Render fire
 			if (!isJumping) {
 				if (FIRE_BUTTON_PRESSED) {
-					LCD_LoadPart((uint8_t*) Fire[(tick / (int)(30 / overallSpeed)) % 2], 24, 52, 9, 25, DRAWMODE_ADD, REPEATMODE_NONE);
+					myFire.bmp = (uint8_t*) Fire[(tick / (int)(30 / overallSpeed)) % 2];
+					LCD_LoadObj(&myFire, DRAWMODE_ADD, REPEATMODE_NONE);
 				}
+			}
+
+			if (IsOverlapping(myDino.x + 3, myDino.y, myDino.x + 23 - 7,
+					myDino.y + 21 - 4, myPlant.x, 59, myPlant.x + 9, 59 + 21)) {
+				dinoIsDead = 1;
 			}
 
 			// Render dino!
-			if (isJumping) {
-				LCD_LoadPart((uint8_t*) DinoNormalS, dinoX, dinoY, 3, 22,
-				DRAWMODE_ADD, REPEATMODE_NONE);
-			} else {
-				// Fire dino
-				if (FIRE_BUTTON_PRESSED) {
-					LCD_LoadPart((uint8_t*) DinoFireRunning[(tick / (int)(30 / overallSpeed)) % 2],
-							dinoX, dinoY, 3, 22, DRAWMODE_ADD, REPEATMODE_NONE);
-				} else {
-					LCD_LoadPart((uint8_t*) DinoNormalRunning[(tick / (int)(30 / overallSpeed)) % 2],
-							dinoX, dinoY, 3, 22, DRAWMODE_ADD, REPEATMODE_NONE);
-				}
+			// Dino is dead
+			if (dinoIsDead) {
+				myDino.bmp = (uint8_t*) DinoDead;
+			}
+			// Dino is jumping
+			else if (isJumping) {
+				myDino.bmp = (uint8_t*) DinoNormalS;
+			}
+			// Fire dino
+			else if (FIRE_BUTTON_PRESSED) {
+				myDino.bmp = (uint8_t*) DinoFireRunning[(tick / (int)(30 / overallSpeed)) % 2];
+			}
+			// Dino is running normally
+			else {
+				myDino.bmp = (uint8_t*) DinoNormalRunning[(tick / (int)(30 / overallSpeed)) % 2];
 			}
 
+			LCD_LoadObj(&myDino, DRAWMODE_ADD, REPEATMODE_NONE);
+
 			// Render a piece of cloud
-			LCD_LoadPart((uint8_t*) Cloud, cloudX, 18, 6, 14, DRAWMODE_ADD,
-			REPEATMODE_NONE);
+			LCD_LoadObj(&myCloud, DRAWMODE_ADD, REPEATMODE_NONE);
 
 			// Render plants
-			LCD_LoadPart((uint8_t*) Plant1, plantX, 59, 2, 22, DRAWMODE_ADD,
-			REPEATMODE_NONE);
+			LCD_LoadObj(&myPlant, DRAWMODE_ADD, REPEATMODE_NONE);
 
 			LCD_Update(&MemDisp);
 
-			if (IsOverlapping(dinoX + 2, dinoY, dinoX + 23 - 7, dinoY + 21, plantX, 59,
-					plantX + 9, 59 + 21))
+			if (dinoIsDead) {
+				while (!JUMP_BUTTON_PRESSED);
+				JUMP_BUTTON_PRESSED = 0;
 				break;
+			}
 		}
-
 	}
-	/* USER CODE END 3 */
+
 }
+/* USER CODE END 3 */
 
 /**
  * @brief System Clock Configuration

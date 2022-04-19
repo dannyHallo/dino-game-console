@@ -34,8 +34,8 @@ uint8_t smallRbit(uint8_t re) {
 	return (uint8_t) (__RBIT(re) >> 24);
 }
 
-int modulo(int x,int N){
-    return (x % N + N) %N;
+int modulo(int x, int N) {
+	return (x % N + N) % N;
 }
 
 // Display Initialization
@@ -109,20 +109,21 @@ void LCD_LoadFull(uint8_t *BMP) {
 void LCD_LoadPart(uint8_t *BMP, int Xcord, uint8_t Ycord, uint8_t bmpW,
 		uint8_t bmpH, uint8_t drawMode, uint8_t repeatMode) {
 
-	uint8_t displayRow = 0;
-	uint16_t displayRowOffset = 0;
+	short displayRow;
+	short displayRowOffset;
 
 	//Counting from Y origin point to bmpH using for loop
 	for (uint8_t y = 0; y < bmpH; y++) {
-		displayRow = Ycord + y;
+		displayRow = modulo(Ycord + y, 96);
+
 		if ((repeatMode == REPEATMODE_NONE)
 				&& (displayRow < 0 || displayRow >= 96)) {
 			continue;
 		}
-		displayRow %= 96;
+
 		displayRowOffset = displayRow * 12;
 
-		int firstXByte = floor((float)Xcord / 8);
+		int firstXByte = floor((float) Xcord / 8);
 		uint8_t leftOffset = modulo(Xcord, 8);
 
 		uint8_t v1, v2 = 0x00;
@@ -163,12 +164,80 @@ void LCD_LoadPart(uint8_t *BMP, int Xcord, uint8_t Ycord, uint8_t bmpW,
 	}
 }
 
+void LCD_LoadObjs(struct GameObj *firstObj, uint8_t drawMode,
+		uint8_t repeatMode) {
+	struct GameObj *pointer = firstObj;
+	LCD_LoadObj(pointer, drawMode, repeatMode);
+
+	while (pointer->next != NULL) {
+		pointer = pointer->next;
+		LCD_LoadObj(pointer, drawMode, repeatMode);
+	}
+}
+
+void LCD_LoadObj(struct GameObj *gameObj, uint8_t drawMode, uint8_t repeatMode) {
+
+	short displayRow;
+	short displayRowOffset;
+
+	//Counting from Y origin point to bmpH using for loop
+	for (uint8_t y = 0; y < gameObj->height; y++) {
+		displayRow = modulo(floor(gameObj->y) + y, 96);
+
+		if ((repeatMode == REPEATMODE_NONE)
+				&& (displayRow < 0 || displayRow >= 96)) {
+			continue;
+		}
+
+		displayRowOffset = displayRow * 12;
+
+		int firstXByte = floor(floor(gameObj->x) / 8);
+		uint8_t leftOffset = modulo(floor(gameObj->x), 8);
+
+		uint8_t v1, v2 = 0x00;
+		uint8_t *currentEditingBuf;
+
+		for (uint8_t j = 0; j < gameObj->width + 1; j++) {
+			if (j == gameObj->width)
+				v2 = 0x00;
+			else
+				v2 = *(gameObj->bmp + gameObj->width * y + j);
+
+			if (repeatMode == REPEATMODE_NONE
+					&& (firstXByte + j < 0 || firstXByte + j > 11)) {
+				v1 = v2;
+				continue;
+			}
+
+			currentEditingBuf = DispBuf + displayRowOffset
+					+ (firstXByte + j) % 12;
+
+			switch (drawMode) {
+			case DRAWMODE_ADD:
+				*currentEditingBuf |= ((v1 << (8 - leftOffset))
+						| (v2 >> leftOffset));
+				break;
+			case DRAWMODE_CULL:
+				*currentEditingBuf &= ~((v1 << (8 - leftOffset))
+						| (v2 >> leftOffset));
+				break;
+			case DRAWMODE_TOGGLE:
+				*currentEditingBuf ^= ((v1 << (8 - leftOffset))
+						| (v2 >> leftOffset));
+				break;
+			}
+
+			v1 = v2;
+		}
+	}
+}
+
 void LCD_DrawLine(uint8_t startingRow, int startingPoint, uint8_t length,
 		uint8_t drawMode) {
 	uint16_t rowOffset = (startingRow % 96) * 12;
 
 	for (uint8_t j = 0; j < length; j++) {
-		if(startingPoint + j < 0)
+		if (startingPoint + j < 0)
 			continue;
 		uint8_t additionalOffset = ((startingPoint + j) % 96) / 8;
 
