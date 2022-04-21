@@ -49,9 +49,8 @@ void LCD_Update(LS013B4DN04 *MemDisp);
 void LCD_LoadFull(uint8_t *BMP);
 void LCD_LoadPart(uint8_t *BMP, int Xcord, uint8_t Ycord, uint8_t bmpW,
 		uint8_t bmpH, uint8_t drawMode, uint8_t repeatMode);
-void LCD_LoadObjs(struct GameObj *firstObj, uint8_t drawMode,
-		uint8_t repeatMode);
-void LCD_LoadObj(struct GameObj *gameObj, uint8_t drawMode, uint8_t repeatMode);
+void LCD_LoadObjs(GameObj *header, uint8_t drawMode, uint8_t repeatMode);
+void LCD_LoadObj(GameObj *gameObj, uint8_t drawMode, uint8_t repeatMode);
 void LCD_DrawLine(uint8_t startingRow, int startingPoint, uint8_t length,
 		uint8_t drawMode);
 void LCD_Print(char txtBuf[], size_t len);

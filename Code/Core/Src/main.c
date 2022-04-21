@@ -36,6 +36,9 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#define PLANT_BUF_SIZE 4
+#define CLOUD_BUF_SIZE 2
+
 #define KEY0_STATE  HAL_GPIO_ReadPin(KEY0_GPIO_Port, KEY0_Pin)
 #define KEY1_STATE  HAL_GPIO_ReadPin(KEY1_GPIO_Port, KEY1_Pin)
 
@@ -82,6 +85,9 @@ unsigned long tick = 0;
 static bool KeyState[2] = { 0, 0 };
 static bool KeyPressed[2] = { 0, 0 };
 static bool KeyReleased[2] = { 0, 0 };
+
+//static int a, b;
+//GameObj* plantHeader
 /* USER CODE END 0 */
 
 /**
@@ -124,13 +130,17 @@ int main(void) {
 	static short dinoVerticalMovement;
 	static float overallSpeed;
 
-	static struct GameObj myPlant = { .bmp = (uint8_t*) Plant1, .y = 59,
-			.width = 2, .height = 22 };
-	static struct GameObj myDino = { .bmp = NULL, .x = 4, .width = 3, .height =
-			22 };
-	static struct GameObj myCloud = { .bmp = (uint8_t*) Cloud, .y = 18, .width =
-			6, .height = 14 };
-	static struct GameObj myFire = { NULL, 24, 52, 9, 25 };
+	GameObj *dinoHeader = GenLoopBuf(1);
+	ObjInit(dinoHeader, NULL, 4, -1, 3, 22);
+
+	GameObj *fireHeader = GenLoopBuf(1);
+	ObjInit(fireHeader, NULL, 24, 52, 9, 25);
+
+	GameObj *cloudHeader = GenLoopBuf(CLOUD_BUF_SIZE);
+	ObjInit(cloudHeader, (uint8_t*) Cloud, -1, 18, 6, 14);
+
+	GameObj *plantHeader = GenLoopBuf(PLANT_BUF_SIZE);
+	ObjInit(plantHeader, (uint8_t*) Plant1, -1, 59, 2, 22);
 	/* USER CODE END 2 */
 
 	/* Infinite loop */
@@ -147,9 +157,9 @@ int main(void) {
 		jumpTick = 0;
 		overallSpeed = 1;
 
-		myDino.y = DinoGroundPos;
-		myPlant.x = 96;
-		myCloud.x = 96;
+		dinoHeader->y = DinoGroundPos;
+		plantHeader->x = 96;
+		cloudHeader->x = 96;
 
 		while (1) {
 			tick++;
@@ -182,9 +192,16 @@ int main(void) {
 				}
 			}
 
-			ShiftX(&myPlant, -0.8 * overallSpeed);
-			ShiftX(&myCloud, -0.1 * overallSpeed);
-			myDino.y = dinoVerticalMovement;
+			if (tick % 80 == 0) {
+				plantHeader = Append(plantHeader, 96);
+			}
+			if (tick % 800 == 0) {
+				cloudHeader = Append(cloudHeader, 96);
+			}
+
+			plantHeader = ShiftX(plantHeader, -0.8 * overallSpeed);
+			cloudHeader = ShiftX(cloudHeader, -0.1 * overallSpeed);
+			dinoHeader->y = dinoVerticalMovement;
 
 			// Reset canvas
 			LCD_Fill(true);
@@ -192,49 +209,50 @@ int main(void) {
 
 			// Add culling masks
 			// Plant
-			LCD_DrawLine(77, myPlant.x + 2, 6, DRAWMODE_CULL);
+//			LCD_DrawLine(77, myPlant.x + 2, 6, DRAWMODE_CULL);
 			// Dino
-			LCD_DrawLine(myDino.y + 19, myDino.x + 3, 10, DRAWMODE_CULL);
-			LCD_DrawLine(myDino.y + 6, myDino.x + 15, 5, DRAWMODE_CULL);
+			LCD_DrawLine(dinoHeader->y + 19, dinoHeader->x + 3, 10,
+					DRAWMODE_CULL);
 
 			// Render fire
 			if (!isJumping) {
 				if (FIRE_BUTTON_PRESSED) {
-					myFire.bmp = (uint8_t*) Fire[(tick / (int)(30 / overallSpeed)) % 2];
-					LCD_LoadObj(&myFire, DRAWMODE_ADD, REPEATMODE_NONE);
+					fireHeader->bmp = (uint8_t*) Fire[(tick / (int)(30 / overallSpeed)) % 2];
+					LCD_LoadObj(fireHeader, DRAWMODE_ADD, REPEATMODE_NONE);
 				}
 			}
 
-			if (IsOverlapping(myDino.x + 3, myDino.y, myDino.x + 23 - 7,
-					myDino.y + 21 - 4, myPlant.x, 59, myPlant.x + 9, 59 + 21)) {
-				dinoIsDead = 1;
-			}
+//			if (IsOverlapping(myDino.x + 3, myDino.y, myDino.x + 23 - 7,
+//					myDino.y + 21 - 4, myPlant.x, 59, myPlant.x + 9, 59 + 21)) {
+//				dinoIsDead = 1;
+//			}
 
 			// Render dino!
 			// Dino is dead
 			if (dinoIsDead) {
-				myDino.bmp = (uint8_t*) DinoDead;
+				dinoHeader->bmp = (uint8_t*) DinoDead;
 			}
 			// Dino is jumping
 			else if (isJumping) {
-				myDino.bmp = (uint8_t*) DinoNormalS;
+				dinoHeader->bmp = (uint8_t*) DinoNormalS;
 			}
 			// Fire dino
 			else if (FIRE_BUTTON_PRESSED) {
-				myDino.bmp = (uint8_t*) DinoFireRunning[(tick / (int)(30 / overallSpeed)) % 2];
+				dinoHeader->bmp = (uint8_t*) DinoFireRunning[(tick / (int)(30 / overallSpeed)) % 2];
 			}
 			// Dino is running normally
 			else {
-				myDino.bmp = (uint8_t*) DinoNormalRunning[(tick / (int)(30 / overallSpeed)) % 2];
+				dinoHeader->bmp = (uint8_t*) DinoNormalRunning[(tick / (int)(30 / overallSpeed)) % 2];
 			}
 
-			LCD_LoadObj(&myDino, DRAWMODE_ADD, REPEATMODE_NONE);
+			// Render dino
+			LCD_LoadObjs(dinoHeader, DRAWMODE_ADD, REPEATMODE_NONE);
 
-			// Render a piece of cloud
-			LCD_LoadObj(&myCloud, DRAWMODE_ADD, REPEATMODE_NONE);
+			// Render clouds
+			LCD_LoadObjs(cloudHeader, DRAWMODE_ADD, REPEATMODE_NONE);
 
 			// Render plants
-			LCD_LoadObj(&myPlant, DRAWMODE_ADD, REPEATMODE_NONE);
+			LCD_LoadObjs(plantHeader, DRAWMODE_ADD, REPEATMODE_NONE);
 
 			LCD_Update(&MemDisp);
 

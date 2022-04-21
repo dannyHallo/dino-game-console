@@ -15,7 +15,7 @@ bool IsOverlapping(short x1, short y1, short x2, short y2, short x3, short y3,
 	return true;
 }
 
-bool IsFadedOutOfScene(struct GameObj *obj) {
+bool IsFadedOutOfScene(GameObj *obj) {
 	if (obj->x + obj->width * 8 < 0) {
 		return true;
 	} else {
@@ -23,39 +23,77 @@ bool IsFadedOutOfScene(struct GameObj *obj) {
 	}
 }
 
-void Append(struct GameObj *firstObj, short xPos) {
-	struct GameObj nextObj = { .bmp = firstObj->bmp, .x = xPos,
-			.y = firstObj->y, .height = firstObj->height, .width =
-					firstObj->width, .next = NULL };
+// Append buffer in loop, if buffers are all occupied, use the first buffer
+GameObj* Append(GameObj *header, short xPos) {
+	GameObj *ptr = header;
 
-	// Move pointer to the last pos, and append
-	struct GameObj *pointer = firstObj;
-	while (pointer->next != NULL) {
-		pointer = pointer->next;
+	while (ptr->full) {
+		ptr = ptr->next;
+		if (ptr == header) {
+			break;
+		}
 	}
-	*pointer->next = nextObj;
+	ptr->bmp = header->bmp;
+	ptr->x = xPos;
+	ptr->y = header->y;
+	ptr->width = header->width;
+	ptr->height = header->height;
+	ptr->full = 1;
+
+	// Out of memory, append on the back
+	if(ptr == header)
+		return header->next;
+	// Normal state
+	else
+		return header;
 }
 
-void DeleteHeader(struct GameObj *firstObj) {
-	if (firstObj->next == NULL){
-		firstObj->x = 96;
-		return;
+// Generate loop buffer given certain size
+GameObj* GenLoopBuf(uint8_t size) {
+	GameObj *head = NULL, *cyclic = NULL;
+	head = (GameObj*) malloc(sizeof(GameObj));
+	head->full = 0;
+	cyclic = head;
+	for (int i = 1; i < size; i++) {
+		GameObj *body = (GameObj*) malloc(sizeof(GameObj));
+		body->full = 0;
+		cyclic->next = body;
+		cyclic = body;
 	}
-	struct GameObj *temp = firstObj;
-	firstObj = firstObj->next;
-	free(temp);
+	cyclic->next = head;
+	return head;
 }
 
-void ShiftX(struct GameObj *firstObj, float byX) {
-	struct GameObj *pointer = firstObj;
-	pointer->x += byX;
+// Initializes the pointer
+void ObjInit(GameObj* obj, uint8_t* bmp, float x, float y, uint8_t width, uint8_t height){
+	obj->bmp = bmp;
+	obj->x = x;
+	obj->y = y;
+	obj->width = width;
+	obj->height = height;
+	obj->full = 1;
+}
 
-	while (pointer->next != NULL) {
-		pointer = pointer->next;
-		pointer->x += byX;
+
+// Shift all buffers and return the first active pointer
+GameObj* ShiftX(GameObj *header, float byX) {
+	GameObj *ptr = header;
+
+	for (;;) {
+		if (ptr->full) {
+			ptr->x += byX;
+		}
+		ptr = ptr->next;
+		if(ptr == header)
+			break;
 	}
 
-	if (IsFadedOutOfScene(firstObj)) {
-		DeleteHeader(firstObj);
+	while (IsFadedOutOfScene(ptr)) {
+		ptr->full = 0;
+		ptr = ptr->next;
+		if (ptr == header) {
+			break;
+		}
 	}
+	return ptr;
 }

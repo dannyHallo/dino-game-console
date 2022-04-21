@@ -164,18 +164,20 @@ void LCD_LoadPart(uint8_t *BMP, int Xcord, uint8_t Ycord, uint8_t bmpW,
 	}
 }
 
-void LCD_LoadObjs(struct GameObj *firstObj, uint8_t drawMode,
-		uint8_t repeatMode) {
-	struct GameObj *pointer = firstObj;
-	LCD_LoadObj(pointer, drawMode, repeatMode);
+void LCD_LoadObjs(GameObj *header, uint8_t drawMode, uint8_t repeatMode) {
+	GameObj *ptr = header;
 
-	while (pointer->next != NULL) {
-		pointer = pointer->next;
-		LCD_LoadObj(pointer, drawMode, repeatMode);
+	for (;;) {
+		if (ptr->full) {
+			LCD_LoadObj(ptr, drawMode, repeatMode);
+		}
+		ptr = ptr->next;
+		if (ptr == header)
+			break;
 	}
 }
 
-void LCD_LoadObj(struct GameObj *gameObj, uint8_t drawMode, uint8_t repeatMode) {
+void LCD_LoadObj(GameObj *gameObj, uint8_t drawMode, uint8_t repeatMode) {
 
 	short displayRow;
 	short displayRowOffset;

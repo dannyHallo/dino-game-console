@@ -16,15 +16,17 @@ typedef struct GameObj{
 	uint8_t* bmp;
 	float x, y;
 	uint8_t width, height;
+	bool full;
 	struct GameObj* next;
-};
+} GameObj;
 
 bool IsOverlapping(short x1, short y1, short x2, short y2, short x3, short y3,
 		short x4, short y4);
 bool IsFadedOutOfScene(struct GameObj *obj);
-void Append(struct GameObj *firstObj, short xPos);
-void DeleteHeader(struct GameObj *firstObj);
-void ShiftX(struct GameObj *firstObj, float byX);
+GameObj* Append(struct GameObj *header, short xPos);
+GameObj* GenLoopBuf(uint8_t size);
+void ObjInit(GameObj* obj, uint8_t* bmp, float x, float y, uint8_t width, uint8_t height);
+GameObj* ShiftX(GameObj *header, float byX);
 
 
 #endif /* INC_GAMELOGIC_H_ */
