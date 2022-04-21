@@ -7,7 +7,7 @@
 ../Core/Src/LS013B4DN04.c:101:6:LCD_LoadFull	16	static
 ../Core/Src/LS013B4DN04.c:109:6:LCD_LoadPart	56	static
 ../Core/Src/LS013B4DN04.c:167:6:LCD_LoadObjs	24	static
-../Core/Src/LS013B4DN04.c:180:6:LCD_LoadObj	48	static
-../Core/Src/LS013B4DN04.c:237:6:LCD_DrawLine	32	static
-../Core/Src/LS013B4DN04.c:262:6:LCD_Invert	16	static
-../Core/Src/LS013B4DN04.c:271:6:LCD_Fill	16	static
+../Core/Src/LS013B4DN04.c:183:6:LCD_LoadObj	48	static
+../Core/Src/LS013B4DN04.c:240:6:LCD_DrawLine	32	static
+../Core/Src/LS013B4DN04.c:265:6:LCD_Invert	16	static
+../Core/Src/LS013B4DN04.c:274:6:LCD_Fill	16	static

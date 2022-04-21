@@ -27,25 +27,28 @@ bool IsFadedOutOfScene(GameObj *obj) {
 GameObj* Append(GameObj *header, short xPos) {
 	GameObj *ptr = header;
 
+	// If the current pointer is occupied, look for the next pos
 	while (ptr->full) {
 		ptr = ptr->next;
+		// Have cycled for a whole loop
 		if (ptr == header) {
-			break;
+			ptr->bmp = header->bmp;
+			ptr->x = xPos;
+			ptr->y = header->y;
+			ptr->width = header->width;
+			ptr->height = header->height;
+			ptr->full = 1;
+			return header->next;
 		}
 	}
+
 	ptr->bmp = header->bmp;
 	ptr->x = xPos;
 	ptr->y = header->y;
 	ptr->width = header->width;
 	ptr->height = header->height;
 	ptr->full = 1;
-
-	// Out of memory, append on the back
-	if(ptr == header)
-		return header->next;
-	// Normal state
-	else
-		return header;
+	return header;
 }
 
 // Generate loop buffer given certain size
@@ -64,36 +67,48 @@ GameObj* GenLoopBuf(uint8_t size) {
 	return head;
 }
 
-// Initializes the pointer
-void ObjInit(GameObj* obj, uint8_t* bmp, float x, float y, uint8_t width, uint8_t height){
-	obj->bmp = bmp;
-	obj->x = x;
-	obj->y = y;
-	obj->width = width;
-	obj->height = height;
-	obj->full = 1;
-}
+// Initializes the head pointer with the given values, n resets other buffers
+void HeaderInit(GameObj *header, uint8_t *bmp, float x, float y, uint8_t width,
+		uint8_t height) {
+	GameObj *ptr = header;
 
+	ptr->bmp = bmp;
+	ptr->x = x;
+	ptr->y = y;
+	ptr->width = width;
+	ptr->height = height;
+	ptr->full = 1;
+
+	for(;;){
+		if(ptr->next == header)
+			return;
+		ptr = ptr->next;
+		ptr->full = 0;
+	}
+}
 
 // Shift all buffers and return the first active pointer
 GameObj* ShiftX(GameObj *header, float byX) {
 	GameObj *ptr = header;
 
+	// Cycle through all valid buffers once and apply the drift
 	for (;;) {
 		if (ptr->full) {
 			ptr->x += byX;
 		}
-		ptr = ptr->next;
-		if(ptr == header)
+		// Have cycled through the buffer
+		if ( !ptr->next->full || ptr->next == header)
 			break;
+		ptr = ptr->next;
 	}
 
+	// Return the first available buffer, if no buf is available, return header
 	while (IsFadedOutOfScene(ptr)) {
 		ptr->full = 0;
-		ptr = ptr->next;
-		if (ptr == header) {
+		if (!ptr->next->full || ptr->next == header) {
 			break;
 		}
+		ptr = ptr->next;
 	}
 	return ptr;
 }

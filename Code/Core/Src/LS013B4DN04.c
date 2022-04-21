@@ -167,13 +167,16 @@ void LCD_LoadPart(uint8_t *BMP, int Xcord, uint8_t Ycord, uint8_t bmpW,
 void LCD_LoadObjs(GameObj *header, uint8_t drawMode, uint8_t repeatMode) {
 	GameObj *ptr = header;
 
+	if (!ptr->full)
+		return;
+
 	for (;;) {
-		if (ptr->full) {
-			LCD_LoadObj(ptr, drawMode, repeatMode);
-		}
+		LCD_LoadObj(ptr, drawMode, repeatMode);
+
+		// If looped through all / next buffer is empty
+		if (!ptr->next->full || ptr->next == header)
+			return;
 		ptr = ptr->next;
-		if (ptr == header)
-			break;
 	}
 }
 
