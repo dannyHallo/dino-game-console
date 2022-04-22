@@ -44,7 +44,6 @@ typedef struct {
 
 void LCD_Init(LS013B4DN04 *MemDisp, SPI_HandleTypeDef *Bus,
 		GPIO_TypeDef *dispGPIO, uint16_t LCDcs);
-void LCD_Clean(LS013B4DN04 *MemDisp);
 void LCD_Update(LS013B4DN04 *MemDisp);
 void LCD_LoadFull(uint8_t *BMP);
 void LCD_LoadPart(uint8_t *BMP, int Xcord, uint8_t Ycord, uint8_t bmpW,
@@ -57,5 +56,7 @@ void LCD_Print(char txtBuf[], size_t len);
 void LCD_BufClean(void);
 void LCD_Invert(void);
 void LCD_Fill(bool fill);
+void LCD_DRAW_CIRCLE(short originX, short originY, uint8_t radius,
+		uint8_t drawMode);
 
 #endif /* INC_LS013B4DN04_H_ */

@@ -19,6 +19,7 @@ uint8_t emptyByte = 0x00;
 
 //This buffer holds 50 Bytes * 240 Row = 12K of Display buffer
 uint8_t *DispBuf; // entire display buffer.
+uint8_t *DispBuf2;
 
 //This buffer holds temporary 2 Command bytes
 static uint8_t SendBuf[2];
@@ -48,8 +49,10 @@ void LCD_Init(LS013B4DN04 *MemDisp, SPI_HandleTypeDef *Bus,
 	MemDisp->LCDcs = LCDcs;
 
 	DispBuf = malloc(1152);
+	DispBuf2 = malloc(1152);
 
 	memset(DispBuf, 0x00, 1152);
+	memset(DispBuf2, 0x00, 1152);
 
 	//At lease 3 + 13 clock is needed for Display clear (16 Clock = 8x2 bit = 2 byte)
 	HAL_GPIO_WritePin(MemDisp->dispGPIO, MemDisp->LCDcs, GPIO_PIN_SET);
@@ -77,13 +80,6 @@ void LCD_Update(LS013B4DN04 *MemDisp) {
 	HAL_SPI_Transmit(MemDisp->Bus, &emptyByte, 1, 150);
 
 	HAL_GPIO_WritePin(MemDisp->dispGPIO, MemDisp->LCDcs, GPIO_PIN_RESET); // Done
-}
-
-//Clean the Buffer
-void LCD_BufClean(void) {
-	YLine = 1;
-	Xcol = 1;
-	memset(DispBuf, 0xFF, 1152);
 }
 
 // Clear entire Display
@@ -273,7 +269,50 @@ void LCD_Invert(void) {
 //Fill screen with either black or white color
 void LCD_Fill(bool fill) {
 	memset(DispBuf, (fill ? 0 : 0xFF), 1152);
-//	HAL_Delay(10);
+}
+
+void LCD_DRAW_CIRCLE(short originX, short originY, uint8_t radius,
+		uint8_t drawMode) {
+	if (true) {
+		memset(DispBuf2, 0x00, 1152);
+		uint16_t innerSquareSideHalfLen = floor(radius * 0.707);
+
+		for (uint8_t y = 0; y < 96; y++) {
+			uint16_t rowOffset = y * 12;
+
+			bool somePointIsInside = 0;
+			for (uint8_t x = 0; x < 96; x++) {
+
+				// Cull points outside of the square
+				if (abs(x - originX) > radius || abs(y - originY) > radius)
+					continue;
+
+				// If the point is in circle
+				if ((abs(x - originX) < innerSquareSideHalfLen
+						&& abs(y - originY) < innerSquareSideHalfLen)
+						|| (pow(abs(x - originX), 2) + pow(abs(y - originY), 2)
+								< pow(radius, 2))) {
+					somePointIsInside = 1;
+					uint8_t additionalOffset = x / 8;
+					uint8_t bitOffset = 7 - x % 8;
+					uint8_t *currentEditingBuf = DispBuf2 + rowOffset
+							+ additionalOffset;
+					*currentEditingBuf |= (0x01 << bitOffset);
+					continue;
+				}
+
+				// Some points are already inside, but no longer
+				if (somePointIsInside)
+					break;
+			}
+
+		}
+		for (uint16_t offset = 0; offset < 12 * 96; offset++) {
+			*(DispBuf + offset) |= ~*(DispBuf2 + offset);
+		}
+
+	}
+
 }
 
 ////Print 8x8 Text on screen

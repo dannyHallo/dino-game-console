@@ -46,8 +46,10 @@
 #define LEDB_OFF  HAL_GPIO_WritePin(LED_B_GPIO_Port, LED_B_Pin, GPIO_PIN_SET)
 #define LEDB_TOGGLE  HAL_GPIO_TogglePin(LED_B_GPIO_Port, LED_B_Pin)
 
-#define FIRE_BUTTON_PRESSED KeyState[0]
-#define JUMP_BUTTON_PRESSED KeyPressed[1]
+#define FIRE_BUTTON_DOWN KeyPressed[0]
+#define FIRE_BUTTON KeyState[0]
+#define JUMP_BUTTON_DOWN KeyPressed[1]
+#define JUMP_BUTTON KeyState[1]
 
 /* USER CODE END PD */
 
@@ -87,7 +89,7 @@ static bool KeyReleased[2] = { 0, 0 };
 
 static bool isJumping, dinoIsDead;
 static unsigned short jumpTick, nextPlantTickDel, nextCloudTickDel;
-static unsigned long tick, plantSubTick, cloudSubTick;
+static unsigned long tick, plantSubTick, cloudSubTick, scanTick;
 static short dinoVerticalMovement;
 static float overallSpeed;
 static GameObj *ptr;
@@ -140,20 +142,21 @@ int main(void) {
 
 	/* Infinite loop */
 	/* USER CODE BEGIN WHILE */
+	/// START OVER
 	while (1) {
 		/* USER CODE END WHILE */
 		/* USER CODE BEGIN 3 */
 		LCD_LoadFull((uint8_t*) Title);
 		LCD_Update(&MemDisp);
 
-		while (!JUMP_BUTTON_PRESSED);
-		JUMP_BUTTON_PRESSED= 0;
+		while (!JUMP_BUTTON_DOWN);
+		JUMP_BUTTON_DOWN= 0;
 
 		isJumping = 0;
 		dinoIsDead = 0;
 		jumpTick = 0, nextPlantTickDel = 0, nextCloudTickDel = 0;
 		tick = 0, plantSubTick = 0, cloudSubTick = 0;
-		overallSpeed = 0;
+		overallSpeed = 1;
 
 		HeaderInit(dinoHeader, NULL, 4, DinoGroundPos, 3, 22);
 		HeaderInit(fireHeader, NULL, 24, 52, 9, 25);
@@ -163,21 +166,18 @@ int main(void) {
 		dinoHeader = Append(dinoHeader, 4, DinoGroundPos);
 		fireHeader = Append(fireHeader, 24, 52);
 
+		/// THE MAIN GAME LOOP
 		while (1) {
-			if(tick % 2000 == 0){
-				overallSpeed += 0.5;
+
+			if (overallSpeed < 1.5) {
+				overallSpeed += 0.001;
 			}
 
-//			// Speed Gradual Control
-//			if (overallSpeed < 1.2) {
-//				overallSpeed += 0.001;
-//			}
-
-			if (JUMP_BUTTON_PRESSED) {
+			if (JUMP_BUTTON_DOWN) {
 				if(!isJumping) {
 					isJumping = 1;
 				}
-				JUMP_BUTTON_PRESSED = 0;
+				JUMP_BUTTON_DOWN = 0;
 			}
 
 			dinoVerticalMovement = DinoGroundPos;
@@ -196,13 +196,15 @@ int main(void) {
 				}
 			}
 
+			// Add a plant
 			if (tick - plantSubTick == nextPlantTickDel) {
 				plantHeader = Append(plantHeader, 96, 59);
-				nextPlantTickDel = Random(tick, 60, 160);
+				nextPlantTickDel = Random(tick, 80, 160);
 				plantSubTick = tick;
 			}
+			// Add a piece of cloud
 			if (tick - cloudSubTick == nextCloudTickDel) {
-				cloudHeader = Append(cloudHeader, 96, 18);
+				cloudHeader = Append(cloudHeader, 96, Random(tick, 12, 20));
 				nextCloudTickDel = Random(tick, 800, 1500);
 				cloudSubTick = tick;
 			}
@@ -230,32 +232,32 @@ int main(void) {
 			}
 			// Dino
 			LCD_DrawLine(dinoHeader->y + 19, dinoHeader->x + 3, 10,
-					DRAWMODE_CULL);
+			DRAWMODE_CULL);
 			// Render fire
 			if (!isJumping) {
-				if (FIRE_BUTTON_PRESSED) {
+				if (FIRE_BUTTON) {
 					fireHeader->bmp = (uint8_t*) Fire[(tick / (int)(30 / overallSpeed)) % 2];
 					LCD_LoadObj(fireHeader, DRAWMODE_ADD, REPEATMODE_NONE);
 				}
 			}
 
 			// Check if dino is running into any of our plants!
-//			ptr = plantHeader;
-//			for (;;) {
-//				if (ptr->full) {
-//					if (IsOverlapping(dinoHeader->x + 3, dinoHeader->y,
-//							dinoHeader->x + 23 - 7, dinoHeader->y + 21 - 4,
-//							ptr->x, 59, ptr->x + 9, 59 + 21)) {
-//						dinoIsDead = 1;
-//						break;
-//					}
-//				}
-//				// If looped through all / next buffer is empty
-//				if (!ptr->next->full || ptr->next == plantHeader) {
-//					break;
-//				}
-//				ptr = ptr->next;
-//			}
+			ptr = plantHeader;
+			for (;;) {
+				if (ptr->full) {
+					if (IsOverlapping(dinoHeader->x + 3, dinoHeader->y,
+							dinoHeader->x + 23 - 7, dinoHeader->y + 21 - 4,
+							ptr->x, 59, ptr->x + 9, 59 + 21)) {
+						dinoIsDead = 1;
+						break;
+					}
+				}
+				// If looped through all / next buffer is empty
+				if (!ptr->next->full || ptr->next == plantHeader) {
+					break;
+				}
+				ptr = ptr->next;
+			}
 
 			// Render dino!
 			// Dino is dead
@@ -267,7 +269,7 @@ int main(void) {
 				dinoHeader->bmp = (uint8_t*) DinoNormalS;
 			}
 			// Fire dino
-			else if (FIRE_BUTTON_PRESSED) {
+			else if (FIRE_BUTTON) {
 				dinoHeader->bmp = (uint8_t*) DinoFireRunning[(tick / (int)(16 / overallSpeed)) % 2];
 			}
 			// Dino is running normally
@@ -287,8 +289,13 @@ int main(void) {
 			LCD_Update(&MemDisp);
 
 			if (dinoIsDead) {
-				while (!JUMP_BUTTON_PRESSED);
-				JUMP_BUTTON_PRESSED = 0;
+				for (int i = 96; i >= 0; i--) {
+					if(i > 30)
+						i -= 4;
+					LCD_DRAW_CIRCLE(dinoHeader->x + 17, dinoHeader->y + 8, i,
+							0);
+					LCD_Update(&MemDisp);
+				}
 				break;
 			}
 
@@ -448,7 +455,7 @@ static void MX_GPIO_Init(void) {
 
 /* USER CODE BEGIN 4 */
 void KeyScan() {
-
+//	scanTick++;
 	static uint8_t KeyBuffer[2] = { 0x00, 0x00 };
 
 	KeyBuffer[0] = ((KeyBuffer[0] << 1) | (KEY0_STATE & 0x01));
@@ -473,7 +480,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 	if (htim == &htim1) {
 //		LEDB_TOGGLE;
 		KeyScan();
-
 	}
 }
 /* USER CODE END 4 */
