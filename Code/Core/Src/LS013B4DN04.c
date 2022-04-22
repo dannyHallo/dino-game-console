@@ -242,7 +242,7 @@ void LCD_DrawLine(uint8_t startingRow, int startingPoint, uint8_t length,
 	uint16_t rowOffset = (startingRow % 96) * 12;
 
 	for (uint8_t j = 0; j < length; j++) {
-		if (startingPoint + j < 0)
+		if (startingPoint + j < 0 || startingPoint + j > 95)
 			continue;
 		uint8_t additionalOffset = ((startingPoint + j) % 96) / 8;
 

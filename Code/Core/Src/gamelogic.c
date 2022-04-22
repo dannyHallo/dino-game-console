@@ -24,7 +24,7 @@ bool IsFadedOutOfScene(GameObj *obj) {
 }
 
 // Append buffer in loop, if buffers are all occupied, use the first buffer
-GameObj* Append(GameObj *header, short xPos) {
+GameObj* Append(GameObj *header, short xPos, short yPos) {
 	GameObj *ptr = header;
 
 	// If the current pointer is occupied, look for the next pos
@@ -34,7 +34,7 @@ GameObj* Append(GameObj *header, short xPos) {
 		if (ptr == header) {
 			ptr->bmp = header->bmp;
 			ptr->x = xPos;
-			ptr->y = header->y;
+			ptr->y = yPos;
 			ptr->width = header->width;
 			ptr->height = header->height;
 			ptr->full = 1;
@@ -44,7 +44,7 @@ GameObj* Append(GameObj *header, short xPos) {
 
 	ptr->bmp = header->bmp;
 	ptr->x = xPos;
-	ptr->y = header->y;
+	ptr->y = yPos;
 	ptr->width = header->width;
 	ptr->height = header->height;
 	ptr->full = 1;
@@ -77,10 +77,10 @@ void HeaderInit(GameObj *header, uint8_t *bmp, float x, float y, uint8_t width,
 	ptr->y = y;
 	ptr->width = width;
 	ptr->height = height;
-	ptr->full = 1;
+	ptr->full = 0;
 
-	for(;;){
-		if(ptr->next == header)
+	for (;;) {
+		if (ptr->next == header)
 			return;
 		ptr = ptr->next;
 		ptr->full = 0;
@@ -97,11 +97,12 @@ GameObj* ShiftX(GameObj *header, float byX) {
 			ptr->x += byX;
 		}
 		// Have cycled through the buffer
-		if ( !ptr->next->full || ptr->next == header)
+		if (!ptr->next->full || ptr->next == header)
 			break;
 		ptr = ptr->next;
 	}
 
+	ptr = header;
 	// Return the first available buffer, if no buf is available, return header
 	while (IsFadedOutOfScene(ptr)) {
 		ptr->full = 0;
@@ -111,4 +112,9 @@ GameObj* ShiftX(GameObj *header, float byX) {
 		ptr = ptr->next;
 	}
 	return ptr;
+}
+
+short Random(unsigned long seed, short lowerLim, short upperLim) {
+	srand(seed);
+	return rand() % (upperLim - lowerLim + 1) + lowerLim;
 }

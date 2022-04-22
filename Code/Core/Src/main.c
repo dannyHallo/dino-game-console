@@ -81,10 +81,16 @@ const float JumpTickMax = 80;
 const float DinoJumpHeight = 40;
 const float DinoGroundPos = 58;
 
-unsigned long tick = 0;
 static bool KeyState[2] = { 0, 0 };
 static bool KeyPressed[2] = { 0, 0 };
 static bool KeyReleased[2] = { 0, 0 };
+
+static bool isJumping, dinoIsDead;
+static unsigned short jumpTick, nextPlantTickDel, nextCloudTickDel;
+static unsigned long tick, plantSubTick, cloudSubTick;
+static short dinoVerticalMovement;
+static float overallSpeed;
+static GameObj *ptr;
 
 //static int a, b;
 //GameObj* plantHeader
@@ -125,12 +131,6 @@ int main(void) {
 	// ALL GPIO AND BUSES MUST BE INITED BEFORE CALL THIS FUNCTION
 	LCD_Init(&MemDisp, &hspi1, GPIOA, CS_Pin);
 
-	static bool isJumping, dinoIsDead;
-	static uint8_t jumpTick;
-	static short dinoVerticalMovement;
-	static float overallSpeed;
-	GameObj *ptr;
-
 	GameObj *dinoHeader = GenLoopBuf(1);
 	GameObj *fireHeader = GenLoopBuf(1);
 	GameObj *cloudHeader = GenLoopBuf(CLOUD_BUF_SIZE);
@@ -151,22 +151,27 @@ int main(void) {
 
 		isJumping = 0;
 		dinoIsDead = 0;
-		tick = 0;
-		jumpTick = 0;
-		overallSpeed = 1;
+		jumpTick = 0, nextPlantTickDel = 0, nextCloudTickDel = 0;
+		tick = 0, plantSubTick = 0, cloudSubTick = 0;
+		overallSpeed = 0;
 
 		HeaderInit(dinoHeader, NULL, 4, DinoGroundPos, 3, 22);
 		HeaderInit(fireHeader, NULL, 24, 52, 9, 25);
 		HeaderInit(cloudHeader, (uint8_t*) Cloud, 96, 18, 6, 14);
 		HeaderInit(plantHeader, (uint8_t*) Plant1, 96, 59, 2, 22);
 
-		while (1) {
-			tick++;
+		dinoHeader = Append(dinoHeader, 4, DinoGroundPos);
+		fireHeader = Append(fireHeader, 24, 52);
 
-			// Speed Gradual Control
-			if (overallSpeed < 1.2) {
-				overallSpeed += 0.001;
+		while (1) {
+			if(tick % 2000 == 0){
+				overallSpeed += 0.5;
 			}
+
+//			// Speed Gradual Control
+//			if (overallSpeed < 1.2) {
+//				overallSpeed += 0.001;
+//			}
 
 			if (JUMP_BUTTON_PRESSED) {
 				if(!isJumping) {
@@ -191,11 +196,15 @@ int main(void) {
 				}
 			}
 
-			if (tick % 150 == 0) {
-				plantHeader = Append(plantHeader, 96);
+			if (tick - plantSubTick == nextPlantTickDel) {
+				plantHeader = Append(plantHeader, 96, 59);
+				nextPlantTickDel = Random(tick, 60, 160);
+				plantSubTick = tick;
 			}
-			if (tick % 1000 == 0) {
-				cloudHeader = Append(cloudHeader, 96);
+			if (tick - cloudSubTick == nextCloudTickDel) {
+				cloudHeader = Append(cloudHeader, 96, 18);
+				nextCloudTickDel = Random(tick, 800, 1500);
+				cloudSubTick = tick;
 			}
 
 			plantHeader = ShiftX(plantHeader, -0.8 * overallSpeed);
@@ -219,11 +228,9 @@ int main(void) {
 				}
 				ptr = ptr->next;
 			}
-
 			// Dino
 			LCD_DrawLine(dinoHeader->y + 19, dinoHeader->x + 3, 10,
-			DRAWMODE_CULL);
-
+					DRAWMODE_CULL);
 			// Render fire
 			if (!isJumping) {
 				if (FIRE_BUTTON_PRESSED) {
@@ -232,23 +239,23 @@ int main(void) {
 				}
 			}
 
-			// Check if dino is crushed into any of our plants!
-			ptr = plantHeader;
-			for (;;) {
-				if (ptr->full) {
-					if (IsOverlapping(dinoHeader->x + 3, dinoHeader->y,
-							dinoHeader->x + 23 - 7, dinoHeader->y + 21 - 4,
-							ptr->x, 59, ptr->x + 9, 59 + 21)) {
-						dinoIsDead = 1;
-						break;
-					}
-				}
-				// If looped through all / next buffer is empty
-				if (!ptr->next->full || ptr->next == plantHeader) {
-					break;
-				}
-				ptr = ptr->next;
-			}
+			// Check if dino is running into any of our plants!
+//			ptr = plantHeader;
+//			for (;;) {
+//				if (ptr->full) {
+//					if (IsOverlapping(dinoHeader->x + 3, dinoHeader->y,
+//							dinoHeader->x + 23 - 7, dinoHeader->y + 21 - 4,
+//							ptr->x, 59, ptr->x + 9, 59 + 21)) {
+//						dinoIsDead = 1;
+//						break;
+//					}
+//				}
+//				// If looped through all / next buffer is empty
+//				if (!ptr->next->full || ptr->next == plantHeader) {
+//					break;
+//				}
+//				ptr = ptr->next;
+//			}
 
 			// Render dino!
 			// Dino is dead
@@ -284,6 +291,8 @@ int main(void) {
 				JUMP_BUTTON_PRESSED = 0;
 				break;
 			}
+
+			tick++;
 		}
 	}
 
