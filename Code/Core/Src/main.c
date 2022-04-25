@@ -79,7 +79,7 @@ static void MX_TIM1_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-const float JumpTickMax = 80;
+const float JumpTickMax = 70;
 const float DinoJumpHeight = 40;
 const float DinoGroundPos = 58;
 
@@ -87,9 +87,9 @@ static bool KeyState[2] = { 0, 0 };
 static bool KeyPressed[2] = { 0, 0 };
 static bool KeyReleased[2] = { 0, 0 };
 
-static bool isJumping, dinoIsDead;
+static bool isJumping, flipStatus;
 static unsigned short jumpTick, nextPlantTickDel, nextCloudTickDel;
-static unsigned long tick, plantSubTick, cloudSubTick, scanTick;
+static unsigned long tick, plantSubTick, cloudSubTick;
 static short dinoVerticalMovement;
 static float overallSpeed;
 static GameObj *ptr;
@@ -147,30 +147,34 @@ int main(void) {
 		/* USER CODE END WHILE */
 		/* USER CODE BEGIN 3 */
 		LCD_LoadFull((uint8_t*) Title);
-		LCD_Update(&MemDisp);
-
-		while (!JUMP_BUTTON_DOWN);
-		JUMP_BUTTON_DOWN= 0;
 
 		isJumping = 0;
-		dinoIsDead = 0;
 		jumpTick = 0, nextPlantTickDel = 0, nextCloudTickDel = 0;
 		tick = 0, plantSubTick = 0, cloudSubTick = 0;
 		overallSpeed = 1;
 
-		HeaderInit(dinoHeader, NULL, 4, DinoGroundPos, 3, 22);
-		HeaderInit(fireHeader, NULL, 24, 52, 9, 25);
-		HeaderInit(cloudHeader, (uint8_t*) Cloud, 96, 18, 6, 14);
-		HeaderInit(plantHeader, (uint8_t*) Plant1, 96, 59, 2, 22);
+		HeaderInit(dinoHeader, NULL, 3, 22);
+		HeaderInit(fireHeader, NULL, 9, 25);
+		HeaderInit(cloudHeader, (uint8_t*) Cloud, 6, 14);
+		HeaderInit(plantHeader, (uint8_t*) Plant1, 2, 22);
 
 		dinoHeader = Append(dinoHeader, 4, DinoGroundPos);
 		fireHeader = Append(fireHeader, 24, 52);
 
-		/// THE MAIN GAME LOOP
-		while (1) {
+		LCD_Print("KneeHow!", 0, 0);
 
-			if (overallSpeed < 1.5) {
-				overallSpeed += 0.001;
+		while (!JUMP_BUTTON_DOWN) {
+			LCD_Update(&MemDisp);
+		}
+		JUMP_BUTTON_DOWN= 0;
+
+		/// THE TICK LOOP
+		while (1) {
+			// Day and night invertion
+			if ((tick / 800) % 3 == 2) {
+				flipStatus = 1;
+			} else {
+				flipStatus = 0;
 			}
 
 			if (JUMP_BUTTON_DOWN) {
@@ -196,33 +200,34 @@ int main(void) {
 				}
 			}
 
-			// Add a plant
+			// Plant generation
 			if (tick - plantSubTick == nextPlantTickDel) {
 				plantHeader = Append(plantHeader, 96, 59);
 				nextPlantTickDel = Random(tick, 80, 160);
 				plantSubTick = tick;
 			}
-			// Add a piece of cloud
+			// Clound generation
 			if (tick - cloudSubTick == nextCloudTickDel) {
 				cloudHeader = Append(cloudHeader, 96, Random(tick, 12, 20));
-				nextCloudTickDel = Random(tick, 800, 1500);
+				nextCloudTickDel = Random(tick, 1200, 2000);
 				cloudSubTick = tick;
 			}
 
-			plantHeader = ShiftX(plantHeader, -0.8 * overallSpeed);
-			cloudHeader = ShiftX(cloudHeader, -0.1 * overallSpeed);
-			dinoHeader->y = dinoVerticalMovement;
-
 			// Reset canvas
-			LCD_Fill(true);
-			LCD_DrawLine(77, 0, 96, DRAWMODE_ADD);
+			LCD_Fill(flipStatus);
+			// Draw ground
+			LCD_DrawLine(77, 0, 96, DRAWMODE_ADD, flipStatus);
 
-			// Add culling masks
-			// Plant
+			// Obj shift
+			plantHeader = ShiftX(plantHeader, -1 * overallSpeed);
+			cloudHeader = ShiftX(cloudHeader, -0.1 * overallSpeed);
+
+			dinoHeader->y = dinoVerticalMovement;
+			// Culling masks
 			ptr = plantHeader;
 			for (;;) {
 				if (ptr->full) {
-					LCD_DrawLine(77, ptr->x + 2, 6, DRAWMODE_CULL);
+					LCD_DrawLine(77, ptr->x + 2, 6, DRAWMODE_CULL, flipStatus);
 				}
 				// If looped through all / next buffer is empty
 				if (!ptr->next->full || ptr->next == plantHeader) {
@@ -230,26 +235,29 @@ int main(void) {
 				}
 				ptr = ptr->next;
 			}
-			// Dino
 			LCD_DrawLine(dinoHeader->y + 19, dinoHeader->x + 3, 10,
-			DRAWMODE_CULL);
+			DRAWMODE_CULL, flipStatus);
 			// Render fire
 			if (!isJumping) {
 				if (FIRE_BUTTON) {
 					fireHeader->bmp = (uint8_t*) Fire[(tick / (int)(30 / overallSpeed)) % 2];
-					LCD_LoadObj(fireHeader, DRAWMODE_ADD, REPEATMODE_NONE);
+					LCD_LoadObjs(fireHeader, DRAWMODE_ADD, REPEATMODE_NONE, flipStatus);
 				}
 			}
 
-			// Check if dino is running into any of our plants!
+			LCD_LoadObjs(plantHeader, DRAWMODE_ADD, REPEATMODE_NONE,
+					flipStatus);
+			LCD_LoadObjs(cloudHeader, DRAWMODE_ADD, REPEATMODE_NONE,
+					flipStatus);
+
+			// Check death
 			ptr = plantHeader;
 			for (;;) {
 				if (ptr->full) {
 					if (IsOverlapping(dinoHeader->x + 3, dinoHeader->y,
 							dinoHeader->x + 23 - 7, dinoHeader->y + 21 - 4,
 							ptr->x, 59, ptr->x + 9, 59 + 21)) {
-						dinoIsDead = 1;
-						break;
+						goto Dead;
 					}
 				}
 				// If looped through all / next buffer is empty
@@ -260,12 +268,8 @@ int main(void) {
 			}
 
 			// Render dino!
-			// Dino is dead
-			if (dinoIsDead) {
-				dinoHeader->bmp = (uint8_t*) DinoDead;
-			}
 			// Dino is jumping
-			else if (isJumping) {
+			if (isJumping) {
 				dinoHeader->bmp = (uint8_t*) DinoNormalS;
 			}
 			// Fire dino
@@ -276,30 +280,28 @@ int main(void) {
 			else {
 				dinoHeader->bmp = (uint8_t*) DinoNormalRunning[(tick / (int)(16 / overallSpeed)) % 2];
 			}
+			LCD_LoadObjs(dinoHeader, DRAWMODE_ADD, REPEATMODE_NONE, flipStatus);
 
-			// Render dino
-			LCD_LoadObjs(dinoHeader, DRAWMODE_ADD, REPEATMODE_NONE);
-
-			// Render clouds
-			LCD_LoadObjs(cloudHeader, DRAWMODE_ADD, REPEATMODE_NONE);
-
-			// Render plants
-			LCD_LoadObjs(plantHeader, DRAWMODE_ADD, REPEATMODE_NONE);
-
-			LCD_Update(&MemDisp);
-
-			if (dinoIsDead) {
-				for (int i = 96; i >= 0; i--) {
-					if(i > 30)
-						i -= 4;
-					LCD_DRAW_CIRCLE(dinoHeader->x + 17, dinoHeader->y + 8, i,
-							0);
-					LCD_Update(&MemDisp);
-				}
-				break;
-			}
+			// Render game process
+			LCD_Print("KneeHow!", 0, 0);
 
 			tick++;
+			LCD_Update(&MemDisp);
+		}
+
+		// Dead handler (outer loop)
+		if (0) {
+			Dead: dinoHeader->bmp = (uint8_t*) DinoDead;
+			LCD_LoadObjs(dinoHeader, DRAWMODE_ADD, REPEATMODE_NONE, flipStatus);
+			LCD_Update(&MemDisp);
+
+			HAL_Delay(600);
+
+			for (uint8_t i = 0; i < 3; i++) {
+				LCD_Invert();
+				LCD_Update(&MemDisp);
+				HAL_Delay(60);
+			}
 		}
 	}
 

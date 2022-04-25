@@ -68,13 +68,12 @@ GameObj* GenLoopBuf(uint8_t size) {
 }
 
 // Initializes the head pointer with the given values, n resets other buffers
-void HeaderInit(GameObj *header, uint8_t *bmp, float x, float y, uint8_t width,
-		uint8_t height) {
+void HeaderInit(GameObj *header, uint8_t *bmp, uint8_t width, uint8_t height) {
 	GameObj *ptr = header;
 
 	ptr->bmp = bmp;
-	ptr->x = x;
-	ptr->y = y;
+	ptr->x = 0;
+	ptr->y = 0;
 	ptr->width = width;
 	ptr->height = height;
 	ptr->full = 0;

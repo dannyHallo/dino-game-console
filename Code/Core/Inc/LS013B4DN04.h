@@ -13,6 +13,7 @@
 #include <stdbool.h>
 #include "stm32f1xx_hal.h"
 #include "gamelogic.h"
+#include "pressstart.h"
 
 //// This typedef holds the hardware parameters. For GPIO and SPI
 //typedef struct {
@@ -38,25 +39,33 @@ typedef struct {
 #define REPEATMODE_NONE 0
 #define REPEATMODE_REPEAT 1
 
-//void LCD_Init(LS013B4DN04 *MemDisp, SPI_HandleTypeDef *Bus,
-//		GPIO_TypeDef *dispGPIO,uint16_t LCDcs,uint16_t LCDon,
-//		TIM_HandleTypeDef *TimerX, uint32_t COMpwm);
-
 void LCD_Init(LS013B4DN04 *MemDisp, SPI_HandleTypeDef *Bus,
 		GPIO_TypeDef *dispGPIO, uint16_t LCDcs);
+
 void LCD_Update(LS013B4DN04 *MemDisp);
+
 void LCD_LoadFull(uint8_t *BMP);
+
 void LCD_LoadPart(uint8_t *BMP, int Xcord, uint8_t Ycord, uint8_t bmpW,
 		uint8_t bmpH, uint8_t drawMode, uint8_t repeatMode);
-void LCD_LoadObjs(GameObj *header, uint8_t drawMode, uint8_t repeatMode);
-void LCD_LoadObj(GameObj *gameObj, uint8_t drawMode, uint8_t repeatMode);
+
+void LCD_LoadObjs(GameObj *header, uint8_t drawMode, uint8_t repeatMode,
+		bool flip);
+
+void LCD_LoadObj(uint8_t *bmp, float posX, float posY, uint8_t width,
+		uint8_t height, uint8_t drawMode, uint8_t repeatMode, bool flip);
+
 void LCD_DrawLine(uint8_t startingRow, int startingPoint, uint8_t length,
-		uint8_t drawMode);
-void LCD_Print(char txtBuf[], size_t len);
+		uint8_t drawMode, bool flip);
+
 void LCD_BufClean(void);
+
 void LCD_Invert(void);
-void LCD_Fill(bool fill);
-void LCD_DRAW_CIRCLE(short originX, short originY, uint8_t radius,
+
+void LCD_Fill(bool flip);
+
+void LCD_DrawCircle(short originX, short originY, uint8_t radius,
 		uint8_t drawMode);
 
+void LCD_Print(char* str, short xPos, short yPos);
 #endif /* INC_LS013B4DN04_H_ */

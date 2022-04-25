@@ -18,18 +18,15 @@ uint8_t printCMD[2] = { 0x80, 0x00 }; // Display Bitmap (after issued display up
 uint8_t emptyByte = 0x00;
 
 //This buffer holds 50 Bytes * 240 Row = 12K of Display buffer
-uint8_t *DispBuf; // entire display buffer.
-uint8_t *DispBuf2;
+uint8_t *DispBuf; // Ready-to-use display buffer.
+uint8_t *DispBuf2; // Another disp buf for invert cover
+uint8_t *TextBuf; // Holds a single text
 
 //This buffer holds temporary 2 Command bytes
 static uint8_t SendBuf[2];
 
 //This buffer holds 1 Character bitmap image (8x8)
 //static uint8_t chBuf[8];
-
-//These variables required for print function
-static uint8_t YLine = 1;
-static uint8_t Xcol = 1;
 
 uint8_t smallRbit(uint8_t re) {
 	return (uint8_t) (__RBIT(re) >> 24);
@@ -50,9 +47,11 @@ void LCD_Init(LS013B4DN04 *MemDisp, SPI_HandleTypeDef *Bus,
 
 	DispBuf = malloc(1152);
 	DispBuf2 = malloc(1152);
+	TextBuf = malloc(8);
 
 	memset(DispBuf, 0x00, 1152);
 	memset(DispBuf2, 0x00, 1152);
+	memset(TextBuf, 0x00, 1152);
 
 	//At lease 3 + 13 clock is needed for Display clear (16 Clock = 8x2 bit = 2 byte)
 	HAL_GPIO_WritePin(MemDisp->dispGPIO, MemDisp->LCDcs, GPIO_PIN_SET);
@@ -78,26 +77,19 @@ void LCD_Update(LS013B4DN04 *MemDisp) {
 	}
 
 	HAL_SPI_Transmit(MemDisp->Bus, &emptyByte, 1, 150);
-
 	HAL_GPIO_WritePin(MemDisp->dispGPIO, MemDisp->LCDcs, GPIO_PIN_RESET); // Done
 }
 
 // Clear entire Display
 void LCD_Clean(LS013B4DN04 *MemDisp) {
-	YLine = 1;
-	Xcol = 1;
 	//At lease 3 + 13 clock is needed for Display clear (16 Clock = 8x2 bit = 2 byte)
 	HAL_GPIO_WritePin(MemDisp->dispGPIO, MemDisp->LCDcs, GPIO_PIN_SET);
 	HAL_SPI_Transmit(MemDisp->Bus, (uint8_t*) clearCMD, 2, 150); //According to Datasheet
 	HAL_GPIO_WritePin(MemDisp->dispGPIO, MemDisp->LCDcs, GPIO_PIN_RESET);
-
 }
 
-// Buffer update (full 400*240 pixels)
+// Load full pic
 void LCD_LoadFull(uint8_t *BMP) {
-	/*for(uint16_t l; l < 1152; l++){
-	 DispBuf[l] = (uint8_t)(__RBIT(BMP[l]) >> 24);
-	 }*/
 	memcpy(DispBuf, BMP, 1152);
 }
 
@@ -160,14 +152,16 @@ void LCD_LoadPart(uint8_t *BMP, int Xcord, uint8_t Ycord, uint8_t bmpW,
 	}
 }
 
-void LCD_LoadObjs(GameObj *header, uint8_t drawMode, uint8_t repeatMode) {
+void LCD_LoadObjs(GameObj *header, uint8_t drawMode, uint8_t repeatMode,
+bool flip) {
 	GameObj *ptr = header;
 
 	if (!ptr->full)
 		return;
 
 	for (;;) {
-		LCD_LoadObj(ptr, drawMode, repeatMode);
+		LCD_LoadObj(ptr->bmp, ptr->x, ptr->y, ptr->width, ptr->height, drawMode,
+				repeatMode, flip);
 
 		// If looped through all / next buffer is empty
 		if (!ptr->next->full || ptr->next == header)
@@ -176,14 +170,14 @@ void LCD_LoadObjs(GameObj *header, uint8_t drawMode, uint8_t repeatMode) {
 	}
 }
 
-void LCD_LoadObj(GameObj *gameObj, uint8_t drawMode, uint8_t repeatMode) {
-
+void LCD_LoadObj(uint8_t *bmp, float posX, float posY, uint8_t width,
+		uint8_t height, uint8_t drawMode, uint8_t repeatMode, bool flip) {
 	short displayRow;
 	short displayRowOffset;
 
 	//Counting from Y origin point to bmpH using for loop
-	for (uint8_t y = 0; y < gameObj->height; y++) {
-		displayRow = modulo(floor(gameObj->y) + y, 96);
+	for (uint8_t y = 0; y < height; y++) {
+		displayRow = modulo(floor(posY) + y, 96);
 
 		if ((repeatMode == REPEATMODE_NONE)
 				&& (displayRow < 0 || displayRow >= 96)) {
@@ -192,17 +186,17 @@ void LCD_LoadObj(GameObj *gameObj, uint8_t drawMode, uint8_t repeatMode) {
 
 		displayRowOffset = displayRow * 12;
 
-		int firstXByte = floor(floor(gameObj->x) / 8);
-		uint8_t leftOffset = modulo(floor(gameObj->x), 8);
+		int firstXByte = floor(floor(posX) / 8);
+		uint8_t leftOffset = modulo(floor(posX), 8);
 
 		uint8_t v1, v2 = 0x00;
 		uint8_t *currentEditingBuf;
 
-		for (uint8_t j = 0; j < gameObj->width + 1; j++) {
-			if (j == gameObj->width)
+		for (uint8_t j = 0; j < width + 1; j++) {
+			if (j == width)
 				v2 = 0x00;
 			else
-				v2 = *(gameObj->bmp + gameObj->width * y + j);
+				v2 = *(bmp + width * y + j);
 
 			if (repeatMode == REPEATMODE_NONE
 					&& (firstXByte + j < 0 || firstXByte + j > 11)) {
@@ -213,19 +207,36 @@ void LCD_LoadObj(GameObj *gameObj, uint8_t drawMode, uint8_t repeatMode) {
 			currentEditingBuf = DispBuf + displayRowOffset
 					+ (firstXByte + j) % 12;
 
-			switch (drawMode) {
-			case DRAWMODE_ADD:
-				*currentEditingBuf |= ((v1 << (8 - leftOffset))
-						| (v2 >> leftOffset));
-				break;
-			case DRAWMODE_CULL:
-				*currentEditingBuf &= ~((v1 << (8 - leftOffset))
-						| (v2 >> leftOffset));
-				break;
-			case DRAWMODE_TOGGLE:
-				*currentEditingBuf ^= ((v1 << (8 - leftOffset))
-						| (v2 >> leftOffset));
-				break;
+			if (flip) {
+				switch (drawMode) {
+				case DRAWMODE_ADD:
+					*currentEditingBuf &= ~((v1 << (8 - leftOffset))
+							| (v2 >> leftOffset));
+					break;
+				case DRAWMODE_CULL:
+					*currentEditingBuf |= ((v1 << (8 - leftOffset))
+							| (v2 >> leftOffset));
+					break;
+				case DRAWMODE_TOGGLE:
+					*currentEditingBuf ^= ((v1 << (8 - leftOffset))
+							| (v2 >> leftOffset));
+					break;
+				}
+			} else {
+				switch (drawMode) {
+				case DRAWMODE_ADD:
+					*currentEditingBuf |= ((v1 << (8 - leftOffset))
+							| (v2 >> leftOffset));
+					break;
+				case DRAWMODE_CULL:
+					*currentEditingBuf &= ~((v1 << (8 - leftOffset))
+							| (v2 >> leftOffset));
+					break;
+				case DRAWMODE_TOGGLE:
+					*currentEditingBuf ^= ((v1 << (8 - leftOffset))
+							| (v2 >> leftOffset));
+					break;
+				}
 			}
 
 			v1 = v2;
@@ -234,7 +245,7 @@ void LCD_LoadObj(GameObj *gameObj, uint8_t drawMode, uint8_t repeatMode) {
 }
 
 void LCD_DrawLine(uint8_t startingRow, int startingPoint, uint8_t length,
-		uint8_t drawMode) {
+		uint8_t drawMode, bool flip) {
 	uint16_t rowOffset = (startingRow % 96) * 12;
 
 	for (uint8_t j = 0; j < length; j++) {
@@ -243,21 +254,36 @@ void LCD_DrawLine(uint8_t startingRow, int startingPoint, uint8_t length,
 		uint8_t additionalOffset = ((startingPoint + j) % 96) / 8;
 
 		uint8_t *currentEditingBuf = DispBuf + rowOffset + additionalOffset;
-		switch (drawMode) {
-		case DRAWMODE_ADD:
-			*currentEditingBuf |= (0x80 >> ((startingPoint + j) % 8));
-			break;
-		case DRAWMODE_CULL:
-			*currentEditingBuf &= ~(0x80 >> ((startingPoint + j) % 8));
-			break;
-		case DRAWMODE_TOGGLE:
-			*currentEditingBuf ^= (0x80 >> ((startingPoint + j) % 8));
-			break;
+		if (flip) {
+			switch (drawMode) {
+			case DRAWMODE_ADD:
+				*currentEditingBuf &= ~(0x80 >> ((startingPoint + j) % 8));
+				break;
+			case DRAWMODE_CULL:
+				*currentEditingBuf |= (0x80 >> ((startingPoint + j) % 8));
+				break;
+			case DRAWMODE_TOGGLE:
+				*currentEditingBuf ^= (0x80 >> ((startingPoint + j) % 8));
+				break;
+			}
+		} else {
+			switch (drawMode) {
+			case DRAWMODE_ADD:
+				*currentEditingBuf |= (0x80 >> ((startingPoint + j) % 8));
+				break;
+			case DRAWMODE_CULL:
+				*currentEditingBuf &= ~(0x80 >> ((startingPoint + j) % 8));
+				break;
+			case DRAWMODE_TOGGLE:
+				*currentEditingBuf ^= (0x80 >> ((startingPoint + j) % 8));
+				break;
+			}
 		}
+
 	}
 }
 
-//Invert color of Display memory buffer
+// Inverts color, WILL CAUSE PERFORMANCE LOSS
 void LCD_Invert(void) {
 	uint16_t invt = 1152;
 	do {
@@ -267,11 +293,12 @@ void LCD_Invert(void) {
 }
 
 //Fill screen with either black or white color
-void LCD_Fill(bool fill) {
-	memset(DispBuf, (fill ? 0 : 0xFF), 1152);
+void LCD_Fill(bool flip) {
+	memset(DispBuf, (flip ? 0xFF : 0x00), 1152);
 }
 
-void LCD_DRAW_CIRCLE(short originX, short originY, uint8_t radius,
+// BAD PERFORMANCE WHEN DRAWING BIGGER CIRCLE
+void LCD_DrawCircle(short originX, short originY, uint8_t radius,
 		uint8_t drawMode) {
 	if (true) {
 		memset(DispBuf2, 0x00, 1152);
@@ -315,34 +342,11 @@ void LCD_DRAW_CIRCLE(short originX, short originY, uint8_t radius,
 
 }
 
-////Print 8x8 Text on screen
-//void LCD_Print(char txtBuf[], size_t len){
-//
-//uint16_t strLen = len;
-//uint16_t chOff = 0;
-//
-//for (uint16_t p = 0; p < strLen;p++){
-//	// In case of reached 50 chars or newline detected , Do the newline
-//	if ((Xcol > 50) || *txtBuf == 0x0A){
-//		Xcol = 1;// Move cursor to most left
-//		YLine += 8;// enter new line
-//		txtBuf++;// move to next char
-//	}
-//
-//	// Avoid printing Newline
-//	if (*txtBuf != 0x0A){
-//
-//	chOff = (*txtBuf - 0x20) * 8;// calculate char offset (fist 8 pixel of character)
-//
-//	for(uint8_t i=0;i < 8;i++){// Copy the inverted color px to buffer
-//	chBuf[i] = smallRbit(~font8x8_basic[i + chOff]);
-//	}
-//
-//	LCD_LoadPart((uint8_t *)chBuf, Xcol, YLine, 1, 8);// Align the char with the 8n pixels
-//
-//	txtBuf++;// move to next char
-//	Xcol++;// move cursor to next column
-//	}
-//  }
-//}
+void LCD_Print(char* str, short xPos, short yPos){
+	short strLength = strlen(str);
+	for(short i = 0; i < strLength; i++){
+		FetchText(TextBuf, str[i]);
+		LCD_LoadObj(TextBuf, xPos + i * 8, yPos, 1, 8, DRAWMODE_ADD, REPEATMODE_NONE, 0);
+	}
+}
 

@@ -3,5 +3,5 @@
 ../Core/Src/gamelogic.c:27:10:Append	24	static
 ../Core/Src/gamelogic.c:55:10:GenLoopBuf	32	static
 ../Core/Src/gamelogic.c:71:6:HeaderInit	32	static
-../Core/Src/gamelogic.c:91:10:ShiftX	24	static
-../Core/Src/gamelogic.c:117:7:Random	16	static
+../Core/Src/gamelogic.c:90:10:ShiftX	24	static
+../Core/Src/gamelogic.c:116:7:Random	16	static
