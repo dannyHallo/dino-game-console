@@ -31,7 +31,8 @@ typedef struct {
 void LCD_Init(LS013B4DN04 *MemDisp, SPI_HandleTypeDef *Bus,
 		GPIO_TypeDef *dispGPIO, uint16_t LCDcs);
 
-void LCD_Update(LS013B4DN04 *MemDisp);
+void LCD_UpdateFull(LS013B4DN04 *MemDisp);
+void LCD_UpdateLine(LS013B4DN04 *MemDisp, uint8_t lineNum);
 
 void LCD_LoadFull(uint8_t *BMP);
 

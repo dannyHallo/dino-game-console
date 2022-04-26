@@ -51,6 +51,7 @@ bool GetButtonDown(uint8_t buttonIndex) {
 	EnableButtonDownDetection(buttonIndex);
 	if (KeyPressed[buttonIndex]) {
 		KeyPressed[buttonIndex] = 0;
+		DisableButtonDownDetection(buttonIndex);
 		return 1;
 	}
 	return 0;
@@ -60,6 +61,7 @@ bool GetButtonUp(uint8_t buttonIndex) {
 	EnableButtonUpDetection(buttonIndex);
 	if (KeyReleased[buttonIndex]) {
 		KeyReleased[buttonIndex] = 0;
+		DisableButtonUpDetection(buttonIndex);
 		return 1;
 	}
 	return 0;

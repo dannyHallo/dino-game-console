@@ -61,7 +61,7 @@ void LCD_Init(LS013B4DN04 *MemDisp, SPI_HandleTypeDef *Bus,
 }
 
 // Display update (Transmit data)
-void LCD_Update(LS013B4DN04 *MemDisp) {
+void LCD_UpdateFull(LS013B4DN04 *MemDisp) {
 	SendBuf[0] |= printCMD[0]; // M0 High, M2 Low
 	SendBuf[0] ^= 1 << 6;
 	HAL_GPIO_WritePin(MemDisp->dispGPIO, MemDisp->LCDcs, GPIO_PIN_SET); // Begin
@@ -78,6 +78,30 @@ void LCD_Update(LS013B4DN04 *MemDisp) {
 	}
 
 	HAL_SPI_Transmit(MemDisp->Bus, &emptyByte, 1, 150);
+	HAL_GPIO_WritePin(MemDisp->dispGPIO, MemDisp->LCDcs, GPIO_PIN_RESET); // Done
+}
+
+// Display update (Transmit data)
+void LCD_UpdateLine(LS013B4DN04 *MemDisp, uint8_t lineNum) {
+	SendBuf[0] |= printCMD[0]; // M0 High, M2 Low
+	SendBuf[0] ^= 1 << 6;
+	// CS On
+	HAL_GPIO_WritePin(MemDisp->dispGPIO, MemDisp->LCDcs, GPIO_PIN_SET); // Begin
+
+	// Command
+	HAL_SPI_Transmit(MemDisp->Bus, SendBuf, 1, 150);
+
+	// Line num
+	SendBuf[1] = smallRbit(lineNum + 1); // counting from row number 1 to row number 96
+	HAL_SPI_Transmit(MemDisp->Bus, SendBuf + 1, 1, 150);
+
+	uint16_t offset = lineNum * 12;
+	HAL_SPI_Transmit(MemDisp->Bus, DispBuf + offset, 12, 150);
+
+	// Trailer
+	HAL_SPI_Transmit(MemDisp->Bus, &emptyByte, 2, 150);
+
+	// Cs Off
 	HAL_GPIO_WritePin(MemDisp->dispGPIO, MemDisp->LCDcs, GPIO_PIN_RESET); // Done
 }
 
@@ -289,7 +313,7 @@ void LCD_Print(char *str, short xPos, short yPos, uint8_t drawMode,
 	short strLength = strlen(str);
 	short lineSpacing = 1;
 	short charSpacing = -1;
-	short spaceSpacing = 4;
+	short spaceSpacing = 1;
 	short tabSpacing = 8 + charSpacing;
 
 	short lineOff = 0;

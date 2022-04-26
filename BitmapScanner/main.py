@@ -18,7 +18,7 @@ def process_pic(file_name, invert):
         for x in range(0, width):
             bit_count += 1
             k = currentImage.getpixel((x, y))
-            if (k & (1 - invert)) | ((1 - k) & invert):
+            if (k & invert) | ((1 - k) & (1 - invert)):
                 temp_hex |= 0x01
 
             if bit_count == 8:
@@ -41,16 +41,21 @@ final_list = []
 total_pics = 0
 pic_size = 0
 
+invert = int(input("Invert?"))
+
 for file in os.listdir("Imgs"):
     if file.endswith(".png"):
 
         print(file)
-        pic_data, pic_size = process_pic(file, 1)
+        pic_data, pic_size = process_pic(file, invert=invert)
         final_list.append(pic_data)
         total_pics += 1
 
 
 final = "\n\n".join(final_list)
-print('[' + str(total_pics) + ']' + '[' + str(pic_size) + ']')
+# print('[' + str(total_pics) + ']' + '[' + str(pic_size) + ']')
 print(final)
 pyperclip.copy(final)
+print("\n---------------------------\nCopied " + str(total_pics) + ".")
+
+input("Press any key")

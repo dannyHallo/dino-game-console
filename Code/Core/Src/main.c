@@ -73,7 +73,7 @@ static void MX_TIM1_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-const float JumpTickMax = 70;
+const float JumpTickMax = 60;
 const float DinoJumpHeight = 40;
 const float DinoGroundPos = 58;
 
@@ -126,7 +126,7 @@ int main(void) {
 		/* USER CODE END WHILE */
 		/* USER CODE BEGIN 3 */
 
-		isJumping = 0;
+		isJumping = 0, flipStatus = 0;
 		jumpTick = 0, nextPlantTickDel = 0, nextCloudTickDel = 0;
 		tick = 0, plantSubTick = 0, cloudSubTick = 0;
 		overallSpeed = 1;
@@ -140,18 +140,22 @@ int main(void) {
 		fireHeader = Append(fireHeader, 24, 52);
 
 		LCD_Fill(flipStatus);
-		LCD_DrawLine(77, 0, 28, DRAWMODE_ADD, flipStatus);
+		LCD_DrawLine(77, 0, 29, DRAWMODE_ADD, flipStatus);
 		dinoHeader->bmp = (uint8_t*) DinoNormalS;
+		LCD_DrawLine(dinoHeader->y + 19, dinoHeader->x + 3, 10, DRAWMODE_CULL,
+				flipStatus);
 		LCD_LoadObjs(dinoHeader, DRAWMODE_ADD, REPEATMODE_NONE, flipStatus);
-		LCD_Print("Danny&Cecilia\n\n\t\t\t\t\t\t\t\t@2022", 2, 4, DRAWMODE_ADD,
+		LCD_Print("\t\tMax    #    Chloe", 2, 14, DRAWMODE_ADD,
 		REPEATMODE_NONE, flipStatus);
 
-		while (!GetButtonDown(JUMP_BUTTON))
-			LCD_Update(&MemDisp);
+		while (!GetButtonUp(JUMP_BUTTON))
+			LCD_UpdateFull(&MemDisp);
 
-		for (uint8_t l = 28; l <= 96; l++) {
-			LCD_DrawLine(77, 0, l, DRAWMODE_ADD, flipStatus);
-			LCD_Update(&MemDisp);
+		for (uint8_t l = 29; l <= 96; l++) {
+			uint8_t delayTime = ceil(((float) (96 - l) * 5 / 67));
+			LCD_DrawLine(77, l, 1, DRAWMODE_ADD, flipStatus);
+			LCD_UpdateLine(&MemDisp, 77);
+			HAL_Delay(delayTime);
 		}
 
 		/// THE TICK LOOP
@@ -253,7 +257,7 @@ int main(void) {
 				dinoHeader->bmp = (uint8_t*) DinoNormalS;
 			}
 			// Fire dino
-			else if (FIRE_BUTTON) {
+			else if (GetButton(FIRE_BUTTON)) {
 				dinoHeader->bmp = (uint8_t*) DinoFireRunning[(tick
 						/ (int) (16 / overallSpeed)) % 2];
 			}
@@ -265,26 +269,34 @@ int main(void) {
 			LCD_LoadObjs(dinoHeader, DRAWMODE_ADD, REPEATMODE_NONE, flipStatus);
 
 			// Render game process
-			LCD_Print("Gogogo~", 4, 4, DRAWMODE_ADD, REPEATMODE_NONE,
+			LCD_Print("# # #", 4, 4, DRAWMODE_ADD, REPEATMODE_NONE,
 					flipStatus);
 
 			tick++;
-			LCD_Update(&MemDisp);
+			LCD_UpdateFull(&MemDisp);
 		}
 
 		// Dead handler (outer loop)
 		if (0) {
-			Dead: DisableButtonDownDetection(JUMP_BUTTON);
+			Dead:
+			DisableButtonDownDetection(JUMP_BUTTON);
 			dinoHeader->bmp = (uint8_t*) DinoDead;
 			LCD_LoadObjs(dinoHeader, DRAWMODE_ADD, REPEATMODE_NONE, flipStatus);
-			LCD_Update(&MemDisp);
+			LCD_UpdateFull(&MemDisp);
 
-			HAL_Delay(600);
+			HAL_Delay(500);
 
-			for (uint8_t i = 0; i < 2; i++) {
+			for (uint8_t i = 0; i < 4; i++) {
 				LCD_Invert();
-				LCD_Update(&MemDisp);
-				HAL_Delay(80);
+				LCD_UpdateFull(&MemDisp);
+				HAL_Delay(40);
+			}
+
+			for (uint8_t l = 96; l > 28; l--) {
+				uint8_t delayTime = (uint8_t) ((float) (96 - l) * 5 / 67);
+				LCD_DrawLine(77, l, 1, DRAWMODE_CULL, flipStatus);
+				LCD_UpdateLine(&MemDisp, 77);
+				HAL_Delay(delayTime);
 			}
 		}
 	}
