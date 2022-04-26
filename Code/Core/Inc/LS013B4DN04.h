@@ -9,21 +9,10 @@
 #ifndef INC_LS013B4DN04_H_
 #define INC_LS013B4DN04_H_
 
-#include <stdlib.h>
-#include <stdbool.h>
 #include "stm32f1xx_hal.h"
 #include "gamelogic.h"
-#include "pressstart.h"
+#include <stdbool.h>
 
-//// This typedef holds the hardware parameters. For GPIO and SPI
-//typedef struct {
-//	SPI_HandleTypeDef 	*Bus;
-//	GPIO_TypeDef 		*dispGPIO;
-//	TIM_HandleTypeDef	*TimerX;
-//	uint32_t			 COMpwm;
-//	uint16_t 			 LCDcs;
-//	uint16_t			 LCDon;
-//}LS013B4DN04;
 
 // This typedef holds the hardware parameters. For GPIO and SPI
 typedef struct {
@@ -46,11 +35,8 @@ void LCD_Update(LS013B4DN04 *MemDisp);
 
 void LCD_LoadFull(uint8_t *BMP);
 
-void LCD_LoadPart(uint8_t *BMP, int Xcord, uint8_t Ycord, uint8_t bmpW,
-		uint8_t bmpH, uint8_t drawMode, uint8_t repeatMode);
-
 void LCD_LoadObjs(GameObj *header, uint8_t drawMode, uint8_t repeatMode,
-		bool flip);
+bool flip);
 
 void LCD_LoadObj(uint8_t *bmp, float posX, float posY, uint8_t width,
 		uint8_t height, uint8_t drawMode, uint8_t repeatMode, bool flip);
@@ -67,5 +53,6 @@ void LCD_Fill(bool flip);
 void LCD_DrawCircle(short originX, short originY, uint8_t radius,
 		uint8_t drawMode);
 
-void LCD_Print(char* str, short xPos, short yPos);
+void LCD_Print(char *str, short xPos, short yPos, uint8_t drawMode,
+		uint8_t repeatMode, bool flip);
 #endif /* INC_LS013B4DN04_H_ */

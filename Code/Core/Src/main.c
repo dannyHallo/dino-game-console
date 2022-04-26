@@ -22,6 +22,7 @@
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "LS013B4DN04.h"
+#include "buttons.h"
 #include "image.h"
 #include "gamelogic.h"
 #include <stdlib.h>
@@ -39,18 +40,12 @@
 #define PLANT_BUF_SIZE 2
 #define CLOUD_BUF_SIZE 2
 
-#define KEY0_STATE  HAL_GPIO_ReadPin(KEY0_GPIO_Port, KEY0_Pin)
-#define KEY1_STATE  HAL_GPIO_ReadPin(KEY1_GPIO_Port, KEY1_Pin)
+#define FIRE_BUTTON 0
+#define JUMP_BUTTON 1
 
 #define LEDB_ON  HAL_GPIO_WritePin(LED_B_GPIO_Port, LED_B_Pin, GPIO_PIN_RESET)
 #define LEDB_OFF  HAL_GPIO_WritePin(LED_B_GPIO_Port, LED_B_Pin, GPIO_PIN_SET)
 #define LEDB_TOGGLE  HAL_GPIO_TogglePin(LED_B_GPIO_Port, LED_B_Pin)
-
-#define FIRE_BUTTON_DOWN KeyPressed[0]
-#define FIRE_BUTTON KeyState[0]
-#define JUMP_BUTTON_DOWN KeyPressed[1]
-#define JUMP_BUTTON KeyState[1]
-
 /* USER CODE END PD */
 
 /* Private macro -------------------------------------------------------------*/
@@ -74,7 +69,6 @@ static void MX_GPIO_Init(void);
 static void MX_SPI1_Init(void);
 static void MX_TIM1_Init(void);
 /* USER CODE BEGIN PFP */
-
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -83,19 +77,12 @@ const float JumpTickMax = 70;
 const float DinoJumpHeight = 40;
 const float DinoGroundPos = 58;
 
-static bool KeyState[2] = { 0, 0 };
-static bool KeyPressed[2] = { 0, 0 };
-static bool KeyReleased[2] = { 0, 0 };
-
 static bool isJumping, flipStatus;
 static unsigned short jumpTick, nextPlantTickDel, nextCloudTickDel;
 static unsigned long tick, plantSubTick, cloudSubTick;
 static short dinoVerticalMovement;
 static float overallSpeed;
 static GameObj *ptr;
-
-//static int a, b;
-//GameObj* plantHeader
 /* USER CODE END 0 */
 
 /**
@@ -104,32 +91,22 @@ static GameObj *ptr;
  */
 int main(void) {
 	/* USER CODE BEGIN 1 */
-
 	/* USER CODE END 1 */
-
 	/* MCU Configuration--------------------------------------------------------*/
-
 	/* Reset of all peripherals, Initializes the Flash interface and the Systick. */
 	HAL_Init();
-
 	/* USER CODE BEGIN Init */
-
 	/* USER CODE END Init */
-
 	/* Configure the system clock */
 	SystemClock_Config();
-
 	/* USER CODE BEGIN SysInit */
-
 	/* USER CODE END SysInit */
-
 	/* Initialize all configured peripherals */
 	MX_GPIO_Init();
 	MX_SPI1_Init();
 	MX_TIM1_Init();
 	/* USER CODE BEGIN 2 */
 	HAL_TIM_Base_Start_IT(&htim1);
-
 	// ALL GPIO AND BUSES MUST BE INITED BEFORE CALL THIS FUNCTION
 	LCD_Init(&MemDisp, &hspi1, GPIOA, CS_Pin);
 
@@ -137,6 +114,8 @@ int main(void) {
 	GameObj *fireHeader = GenLoopBuf(1);
 	GameObj *cloudHeader = GenLoopBuf(CLOUD_BUF_SIZE);
 	GameObj *plantHeader = GenLoopBuf(PLANT_BUF_SIZE);
+
+	LCD_LoadFull((uint8_t*) Title);
 
 	/* USER CODE END 2 */
 
@@ -146,7 +125,6 @@ int main(void) {
 	while (1) {
 		/* USER CODE END WHILE */
 		/* USER CODE BEGIN 3 */
-		LCD_LoadFull((uint8_t*) Title);
 
 		isJumping = 0;
 		jumpTick = 0, nextPlantTickDel = 0, nextCloudTickDel = 0;
@@ -161,28 +139,28 @@ int main(void) {
 		dinoHeader = Append(dinoHeader, 4, DinoGroundPos);
 		fireHeader = Append(fireHeader, 24, 52);
 
-		LCD_Print("KneeHow!", 0, 0);
+		LCD_Fill(flipStatus);
+		LCD_DrawLine(77, 0, 28, DRAWMODE_ADD, flipStatus);
+		dinoHeader->bmp = (uint8_t*) DinoNormalS;
+		LCD_LoadObjs(dinoHeader, DRAWMODE_ADD, REPEATMODE_NONE, flipStatus);
+		LCD_Print("Danny&Cecilia\n\n\t\t\t\t\t\t\t\t@2022", 2, 4, DRAWMODE_ADD,
+		REPEATMODE_NONE, flipStatus);
 
-		while (!JUMP_BUTTON_DOWN) {
+		while (!GetButtonDown(JUMP_BUTTON))
+			LCD_Update(&MemDisp);
+
+		for (uint8_t l = 28; l <= 96; l++) {
+			LCD_DrawLine(77, 0, l, DRAWMODE_ADD, flipStatus);
 			LCD_Update(&MemDisp);
 		}
-		JUMP_BUTTON_DOWN= 0;
 
 		/// THE TICK LOOP
 		while (1) {
 			// Day and night invertion
-			if ((tick / 800) % 3 == 2) {
-				flipStatus = 1;
-			} else {
-				flipStatus = 0;
-			}
+			flipStatus = ((tick / 800) % 3 == 2) ? 1 : 0;
 
-			if (JUMP_BUTTON_DOWN) {
-				if(!isJumping) {
-					isJumping = 1;
-				}
-				JUMP_BUTTON_DOWN = 0;
-			}
+			if (GetButtonDown(JUMP_BUTTON) && !isJumping)
+				isJumping = 1;
 
 			dinoVerticalMovement = DinoGroundPos;
 			if (isJumping) {
@@ -239,9 +217,11 @@ int main(void) {
 			DRAWMODE_CULL, flipStatus);
 			// Render fire
 			if (!isJumping) {
-				if (FIRE_BUTTON) {
-					fireHeader->bmp = (uint8_t*) Fire[(tick / (int)(30 / overallSpeed)) % 2];
-					LCD_LoadObjs(fireHeader, DRAWMODE_ADD, REPEATMODE_NONE, flipStatus);
+				if (GetButton(FIRE_BUTTON)) {
+					fireHeader->bmp = (uint8_t*) Fire[(tick
+							/ (int) (30 / overallSpeed)) % 2];
+					LCD_LoadObjs(fireHeader, DRAWMODE_ADD, REPEATMODE_NONE,
+							flipStatus);
 				}
 			}
 
@@ -274,16 +254,19 @@ int main(void) {
 			}
 			// Fire dino
 			else if (FIRE_BUTTON) {
-				dinoHeader->bmp = (uint8_t*) DinoFireRunning[(tick / (int)(16 / overallSpeed)) % 2];
+				dinoHeader->bmp = (uint8_t*) DinoFireRunning[(tick
+						/ (int) (16 / overallSpeed)) % 2];
 			}
 			// Dino is running normally
 			else {
-				dinoHeader->bmp = (uint8_t*) DinoNormalRunning[(tick / (int)(16 / overallSpeed)) % 2];
+				dinoHeader->bmp = (uint8_t*) DinoNormalRunning[(tick
+						/ (int) (16 / overallSpeed)) % 2];
 			}
 			LCD_LoadObjs(dinoHeader, DRAWMODE_ADD, REPEATMODE_NONE, flipStatus);
 
 			// Render game process
-			LCD_Print("KneeHow!", 0, 0);
+			LCD_Print("Gogogo~", 4, 4, DRAWMODE_ADD, REPEATMODE_NONE,
+					flipStatus);
 
 			tick++;
 			LCD_Update(&MemDisp);
@@ -291,21 +274,22 @@ int main(void) {
 
 		// Dead handler (outer loop)
 		if (0) {
-			Dead: dinoHeader->bmp = (uint8_t*) DinoDead;
+			Dead: DisableButtonDownDetection(JUMP_BUTTON);
+			dinoHeader->bmp = (uint8_t*) DinoDead;
 			LCD_LoadObjs(dinoHeader, DRAWMODE_ADD, REPEATMODE_NONE, flipStatus);
 			LCD_Update(&MemDisp);
 
 			HAL_Delay(600);
 
-			for (uint8_t i = 0; i < 3; i++) {
+			for (uint8_t i = 0; i < 2; i++) {
 				LCD_Invert();
 				LCD_Update(&MemDisp);
-				HAL_Delay(60);
+				HAL_Delay(80);
 			}
 		}
 	}
-
 }
+
 /* USER CODE END 3 */
 
 /**
@@ -456,27 +440,6 @@ static void MX_GPIO_Init(void) {
 }
 
 /* USER CODE BEGIN 4 */
-void KeyScan() {
-//	scanTick++;
-	static uint8_t KeyBuffer[2] = { 0x00, 0x00 };
-
-	KeyBuffer[0] = ((KeyBuffer[0] << 1) | (KEY0_STATE & 0x01));
-	KeyBuffer[1] = ((KeyBuffer[1] << 1) | (KEY1_STATE & 0x01));
-
-	for (uint8_t j = 0; j < 2; j++) {
-		if ((KeyBuffer[j] | 0xf0) == 0xff) {
-			if (!KeyState[j]) {
-				KeyPressed[j] = 1;
-			}
-			KeyState[j] = 1;
-		} else if ((KeyBuffer[j] | 0xf0) == 0xf0) {
-			if (KeyState[j]) {
-				KeyReleased[j] = 1;
-			}
-			KeyState[j] = 0;
-		}
-	}
-}
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 	if (htim == &htim1) {

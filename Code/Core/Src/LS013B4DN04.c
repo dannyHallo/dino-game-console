@@ -11,6 +11,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <math.h>
+#include "pressstart.h"
 
 //Display Commands
 uint8_t clearCMD[2] = { 0x20, 0x00 }; // Display Clear 0x04 (HW_LSB)
@@ -93,65 +94,6 @@ void LCD_LoadFull(uint8_t *BMP) {
 	memcpy(DispBuf, BMP, 1152);
 }
 
-// Buffer update (with X,Y Coordinate and image WxH) X,Y Coordinate start at (0,0) to (12,96)
-void LCD_LoadPart(uint8_t *BMP, int Xcord, uint8_t Ycord, uint8_t bmpW,
-		uint8_t bmpH, uint8_t drawMode, uint8_t repeatMode) {
-
-	short displayRow;
-	short displayRowOffset;
-
-	//Counting from Y origin point to bmpH using for loop
-	for (uint8_t y = 0; y < bmpH; y++) {
-		displayRow = modulo(Ycord + y, 96);
-
-		if ((repeatMode == REPEATMODE_NONE)
-				&& (displayRow < 0 || displayRow >= 96)) {
-			continue;
-		}
-
-		displayRowOffset = displayRow * 12;
-
-		int firstXByte = floor((float) Xcord / 8);
-		uint8_t leftOffset = modulo(Xcord, 8);
-
-		uint8_t v1, v2 = 0x00;
-		uint8_t *currentEditingBuf;
-
-		for (uint8_t j = 0; j < bmpW + 1; j++) {
-			if (j == bmpW)
-				v2 = 0x00;
-			else
-				v2 = *(BMP + bmpW * y + j);
-
-			if (repeatMode == REPEATMODE_NONE
-					&& (firstXByte + j < 0 || firstXByte + j > 11)) {
-				v1 = v2;
-				continue;
-			}
-
-			currentEditingBuf = DispBuf + displayRowOffset
-					+ (firstXByte + j) % 12;
-
-			switch (drawMode) {
-			case DRAWMODE_ADD:
-				*currentEditingBuf |= ((v1 << (8 - leftOffset))
-						| (v2 >> leftOffset));
-				break;
-			case DRAWMODE_CULL:
-				*currentEditingBuf &= ~((v1 << (8 - leftOffset))
-						| (v2 >> leftOffset));
-				break;
-			case DRAWMODE_TOGGLE:
-				*currentEditingBuf ^= ((v1 << (8 - leftOffset))
-						| (v2 >> leftOffset));
-				break;
-			}
-
-			v1 = v2;
-		}
-	}
-}
-
 void LCD_LoadObjs(GameObj *header, uint8_t drawMode, uint8_t repeatMode,
 bool flip) {
 	GameObj *ptr = header;
@@ -189,7 +131,7 @@ void LCD_LoadObj(uint8_t *bmp, float posX, float posY, uint8_t width,
 		int firstXByte = floor(floor(posX) / 8);
 		uint8_t leftOffset = modulo(floor(posX), 8);
 
-		uint8_t v1, v2 = 0x00;
+		uint8_t v1 = 0x00, v2 = 0x00;
 		uint8_t *currentEditingBuf;
 
 		for (uint8_t j = 0; j < width + 1; j++) {
@@ -342,11 +284,36 @@ void LCD_DrawCircle(short originX, short originY, uint8_t radius,
 
 }
 
-void LCD_Print(char* str, short xPos, short yPos){
+void LCD_Print(char *str, short xPos, short yPos, uint8_t drawMode,
+		uint8_t repeatMode, bool flip) {
 	short strLength = strlen(str);
-	for(short i = 0; i < strLength; i++){
+	short lineSpacing = 1;
+	short charSpacing = -1;
+	short spaceSpacing = 4;
+	short tabSpacing = 8 + charSpacing;
+
+	short lineOff = 0;
+	short charOff = 0;
+
+	for (short i = 0; i < strLength; i++) {
+		if (str[i] == '\n') {
+			lineOff += (8 + lineSpacing);
+			charOff = 0;
+			continue;
+		}
+		if (str[i] == ' ') {
+			charOff += spaceSpacing;
+			continue;
+		}
+		if (str[i] == '\t') {
+			charOff += tabSpacing;
+			continue;
+		}
+
 		FetchText(TextBuf, str[i]);
-		LCD_LoadObj(TextBuf, xPos + i * 8, yPos, 1, 8, DRAWMODE_ADD, REPEATMODE_NONE, 0);
+		LCD_LoadObj(TextBuf, xPos + charOff, yPos + lineOff, 1, 8, drawMode,
+				repeatMode, flip);
+		charOff += (8 + charSpacing);
 	}
 }
 

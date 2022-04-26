@@ -7,13 +7,13 @@
 
 #include "pressstart.h"
 
-const char CharList[91] = { 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J',
+const char CharList[92] = { 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J',
 		'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X',
 		'Y', 'Z', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l',
 		'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z',
 		'0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '!', '@', '#', '$',
 		'%', '^', '&', '*', '+', '-', '=', '/', '\\', '_', '(', ')', '{', '}',
-		'[', ']', ';', ':', '\'', '\"', ',', '.', '\?', '~', '|' };
+		'[', ']', ';', ':', '\'', '\"', ',', '.', '\?', '~', '|', ' ' };
 
 // 8 x 96
 const uint8_t PressStart[768] = { 0x38, 0xfc, 0x3c, 0xf8, 0x7e, 0xfe, 0x3e,
@@ -85,15 +85,17 @@ const uint8_t PressStart[768] = { 0x38, 0xfc, 0x3c, 0xf8, 0x7e, 0xfe, 0x3e,
 void FetchText(uint8_t *TextBuf, char chr) {
 	uint8_t charSerialNum = -1;
 
-	for (uint8_t i = 0; i < 91; i++) {
+	for (uint8_t i = 0; i < 92; i++) {
 		if (chr == CharList[i]) {
 			charSerialNum = i;
 			break;
 		}
 	}
 
-	if (charSerialNum == -1)
+	if (charSerialNum == -1){
+		memset(TextBuf, 0x00, 8);
 		return;
+	}
 
 	uint8_t charLookupX = charSerialNum % 8;
 	uint8_t charLookupY = 8 * (charSerialNum / 8);
