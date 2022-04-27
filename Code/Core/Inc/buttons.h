@@ -13,8 +13,8 @@
 
 void KeyScan();
 bool GetButton(uint8_t buttonIndex);
-bool GetButtonDown(uint8_t buttonIndex);
-bool GetButtonUp(uint8_t buttonIndex);
+bool GetButtonDown(uint8_t buttonIndex, bool autoRecovery);
+bool GetButtonUp(uint8_t buttonIndex, bool autoRecovery);
 void EnableButtonDownDetection(uint8_t buttonIndex);
 void DisableButtonDownDetection(uint8_t buttonIndex);
 void EnableButtonUpDetection(uint8_t buttonIndex);

@@ -47,39 +47,41 @@ bool GetButton(uint8_t buttonIndex) {
 	return KeyState[buttonIndex];
 }
 
-bool GetButtonDown(uint8_t buttonIndex) {
+bool GetButtonDown(uint8_t buttonIndex, bool autoRecovery) {
 	EnableButtonDownDetection(buttonIndex);
 	if (KeyPressed[buttonIndex]) {
-		KeyPressed[buttonIndex] = 0;
+		if (autoRecovery)
+			KeyPressed[buttonIndex] = 0;
 		DisableButtonDownDetection(buttonIndex);
 		return 1;
 	}
 	return 0;
 }
 
-bool GetButtonUp(uint8_t buttonIndex) {
+bool GetButtonUp(uint8_t buttonIndex, bool autoRecovery) {
 	EnableButtonUpDetection(buttonIndex);
 	if (KeyReleased[buttonIndex]) {
-		KeyReleased[buttonIndex] = 0;
+		if (autoRecovery)
+			KeyReleased[buttonIndex] = 0;
 		DisableButtonUpDetection(buttonIndex);
 		return 1;
 	}
 	return 0;
 }
 
-void EnableButtonDownDetection(uint8_t buttonIndex){
+void EnableButtonDownDetection(uint8_t buttonIndex) {
 	ButtonDownDetectionEnable[buttonIndex] = 1;
 }
 
-void DisableButtonDownDetection(uint8_t buttonIndex){
+void DisableButtonDownDetection(uint8_t buttonIndex) {
 	ButtonDownDetectionEnable[buttonIndex] = 0;
 }
 
-void EnableButtonUpDetection(uint8_t buttonIndex){
+void EnableButtonUpDetection(uint8_t buttonIndex) {
 	ButtonUpDetectionEnable[buttonIndex] = 1;
 }
 
-void DisableButtonUpDetection(uint8_t buttonIndex){
+void DisableButtonUpDetection(uint8_t buttonIndex) {
 	ButtonUpDetectionEnable[buttonIndex] = 0;
 }
 

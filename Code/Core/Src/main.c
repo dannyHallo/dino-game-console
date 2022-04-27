@@ -79,8 +79,9 @@ const float DinoGroundPos = 58;
 
 static bool isJumping, flipStatus;
 static unsigned short jumpTick, nextPlantTickDel, nextCloudTickDel;
-static unsigned long tick, plantSubTick, cloudSubTick;
+static long tick, plantSubTick, cloudSubTick;
 static short dinoVerticalMovement;
+static uint8_t groundLength;
 static float overallSpeed;
 static GameObj *ptr;
 /* USER CODE END 0 */
@@ -128,7 +129,9 @@ int main(void) {
 
 		isJumping = 0, flipStatus = 0;
 		jumpTick = 0, nextPlantTickDel = 0, nextCloudTickDel = 0;
-		tick = 0, plantSubTick = 0, cloudSubTick = 0;
+		plantSubTick = 0, cloudSubTick = 0;
+		groundLength = 29;
+		tick = -JumpTickMax - 10;
 		overallSpeed = 1;
 
 		HeaderInit(dinoHeader, NULL, 3, 22);
@@ -148,22 +151,15 @@ int main(void) {
 		LCD_Print("\t\tMax    #    Chloe", 2, 14, DRAWMODE_ADD,
 		REPEATMODE_NONE, flipStatus);
 
-		while (!GetButtonUp(JUMP_BUTTON))
+		while (!GetButtonDown(JUMP_BUTTON, 0))
 			LCD_UpdateFull(&MemDisp);
-
-		for (uint8_t l = 29; l <= 96; l++) {
-			uint8_t delayTime = ceil(((float) (96 - l) * 5 / 67));
-			LCD_DrawLine(77, l, 1, DRAWMODE_ADD, flipStatus);
-			LCD_UpdateLine(&MemDisp, 77);
-			HAL_Delay(delayTime);
-		}
 
 		/// THE TICK LOOP
 		while (1) {
 			// Day and night invertion
 			flipStatus = ((tick / 800) % 3 == 2) ? 1 : 0;
 
-			if (GetButtonDown(JUMP_BUTTON) && !isJumping)
+			if (GetButtonDown(JUMP_BUTTON, 1) && !isJumping)
 				isJumping = 1;
 
 			dinoVerticalMovement = DinoGroundPos;
@@ -195,10 +191,16 @@ int main(void) {
 				cloudSubTick = tick;
 			}
 
-			// Reset canvas
 			LCD_Fill(flipStatus);
+
 			// Draw ground
-			LCD_DrawLine(77, 0, 96, DRAWMODE_ADD, flipStatus);
+			if (groundLength < 96) {
+				LCD_DrawLine(77, 0, groundLength, DRAWMODE_ADD, flipStatus);
+				groundLength++;
+			} else {
+				// Reset canvas
+				LCD_DrawLine(77, 0, 96, DRAWMODE_ADD, flipStatus);
+			}
 
 			// Obj shift
 			plantHeader = ShiftX(plantHeader, -1 * overallSpeed);
@@ -269,8 +271,7 @@ int main(void) {
 			LCD_LoadObjs(dinoHeader, DRAWMODE_ADD, REPEATMODE_NONE, flipStatus);
 
 			// Render game process
-			LCD_Print("# # #", 4, 4, DRAWMODE_ADD, REPEATMODE_NONE,
-					flipStatus);
+			LCD_Print("# # #", 4, 4, DRAWMODE_ADD, REPEATMODE_NONE, flipStatus);
 
 			tick++;
 			LCD_UpdateFull(&MemDisp);
@@ -278,26 +279,43 @@ int main(void) {
 
 		// Dead handler (outer loop)
 		if (0) {
-			Dead:
-			DisableButtonDownDetection(JUMP_BUTTON);
+			Dead: DisableButtonDownDetection(JUMP_BUTTON);
 			dinoHeader->bmp = (uint8_t*) DinoDead;
+
+			LCD_DrawLine(dinoHeader->y + 19, dinoHeader->x + 3, 10,
+			DRAWMODE_CULL, flipStatus);
 			LCD_LoadObjs(dinoHeader, DRAWMODE_ADD, REPEATMODE_NONE, flipStatus);
 			LCD_UpdateFull(&MemDisp);
 
-			HAL_Delay(500);
+			HAL_Delay(400);
 
-			for (uint8_t i = 0; i < 4; i++) {
+			// Flip screen
+			for (uint8_t i = 0; i < 2; i++) {
+				HAL_Delay(100);
 				LCD_Invert();
 				LCD_UpdateFull(&MemDisp);
-				HAL_Delay(40);
+			}
+
+			// Redraw Dino
+			while (dinoHeader->y <= DinoGroundPos) {
+				LCD_Fill(flipStatus);
+				LCD_DrawLine(77, 0, 96, DRAWMODE_ADD, flipStatus);
+				LCD_DrawLine(dinoHeader->y + 19, dinoHeader->x + 3, 10,
+				DRAWMODE_CULL, flipStatus);
+				LCD_LoadObjs(dinoHeader, DRAWMODE_ADD, REPEATMODE_NONE,
+						flipStatus);
+				HAL_Delay(5);
+				LCD_UpdateFull(&MemDisp);
+				dinoHeader->y++;
 			}
 
 			for (uint8_t l = 96; l > 28; l--) {
-				uint8_t delayTime = (uint8_t) ((float) (96 - l) * 5 / 67);
+				uint8_t delayTime = ceil((float) (96 - l) * 8 / 67);
 				LCD_DrawLine(77, l, 1, DRAWMODE_CULL, flipStatus);
 				LCD_UpdateLine(&MemDisp, 77);
 				HAL_Delay(delayTime);
 			}
+
 		}
 	}
 }
