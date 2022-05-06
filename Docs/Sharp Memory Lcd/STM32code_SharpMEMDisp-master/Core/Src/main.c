@@ -42,7 +42,7 @@ LS027B7DH01 MemDisp;
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
-SPI_HandleTypeDef hspi3;
+ SPI_HandleTypeDef hspi3;
 
 TIM_HandleTypeDef htim15;
 
@@ -113,59 +113,7 @@ int main(void)
   while (1)
   {
     /* USER CODE END WHILE */
-	 if(itCall !=0){
-	  switch(swCase){
 
-	  	case 0:
-	  		  LCD_BufClean();
-	  		  LCD_Clean(&MemDisp);
-	  		  itCall = 0;
-	  		  break;
-	  	case 1:
-	  		  LCD_LoadFull((uint8_t *)Disney);
-	  		  HAL_Delay(100);
-	  		  LCD_Update(&MemDisp);
-	  		  itCall = 0;
-	  		  break;
-	  	case 2:
-	  		  LCD_Fill(true);
-	  		  LCD_Update(&MemDisp);
-	  		  itCall = 0;
-	  		  break;
-	  	case 3:
-	  		  LCD_LoadPart((uint8_t *)GawrGura,10,1,30,240); //Sauce : @NotSafeForCode
-	  		  HAL_Delay(100);
-	  		  LCD_Update(&MemDisp);
-	  		  itCall = 0;
-	  		  break;
-	  	case 4:
-	  		  LCD_BufClean();
-	  		  LCD_Clean(&MemDisp);
-	  		  itCall = 0;
-	  		  break;
-
-	  	case 5:
-	  		  LCD_Print("This is \nLS027B7DH01 !",21);
-	  		  HAL_Delay(10);
-	  		  LCD_Update(&MemDisp);
-	  		  itCall = 0;
-	  		  break;
-	  	case 6:
-	  		  LCD_Invert();
-	  		  LCD_Update(&MemDisp);
-	  		  itCall = 0;
-	  		  break;
-	  	case 7:
-	  		  LCD_Print("\nCoded By TinLethax!",21);
-	  		  HAL_Delay(10);
-	  		  LCD_Update(&MemDisp);
-	  		  itCall = 0;
-	  		  swCase = 0;
-	  		  break;
-	  	default:
-	  		break;
-	  	}
-	 }
     /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
@@ -193,6 +141,7 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+
   /** Initializes the CPU, AHB and APB buses clocks
   */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
@@ -402,5 +351,3 @@ void assert_failed(uint8_t *file, uint32_t line)
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
-
-/************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

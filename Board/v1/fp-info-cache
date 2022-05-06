@@ -1,4 +1,4 @@
-20138987717777080
+20142339290981473
 Audio_Module
 Reverb_BTDR-1H
 Digital Reverberation Unit, http://www.belton.co.kr/inc/downfile.php?seq=17&file=pdf (footprint from http://www.uk-electronic.de/PDF/BTDR-1.pdf)
@@ -50176,12 +50176,12 @@ DannyFootprintLibs
 6
 6
 DannyFootprintLibs
-2032-BK-912
-
-
+96x96 Sharp Memory Lcd With FPC Connector 10p 0.5mm
+1-1734839-0-1
+Connector
 0
-3
-2
+12
+12
 DannyFootprintLibs
 Antenna
 
@@ -50190,6 +50190,20 @@ Antenna
 0
 0
 DannyFootprintLibs
+BHX1-2032-SM
+
+
+0
+3
+3
+DannyFootprintLibs
+BK-912
+
+
+0
+3
+2
+DannyFootprintLibs
 ESOP-8_L4.9-W3.9-P1.27-LS6.0-BL-EP
 
 
@@ -50197,19 +50211,12 @@ ESOP-8_L4.9-W3.9-P1.27-LS6.0-BL-EP
 9
 9
 DannyFootprintLibs
-FOR_TEST
+PIC_Sche2
 
 
 0
 0
 0
-DannyFootprintLibs
-FPC 0.5mm 10P
-1-1734839-0-1
-Connector
-0
-12
-12
 DannyFootprintLibs
 RKJXV122400R
 RKJXV122400R-4
@@ -50233,6 +50240,13 @@ SSD1309
 24
 DannyFootprintLibs
 SW_Kailh_Choc_V1
+Kailh Choc V1 (CPG1350) keyswitch
+Kailh Choc V1 CPG1350 Keyswitch Switch Cutout
+0
+2
+2
+DannyFootprintLibs
+SW_Kailh_Choc_V1_HOTSWAP
 Kailh Choc V1 (CPG1350) keyswitch
 Kailh Choc V1 CPG1350 Keyswitch Switch Cutout
 0
