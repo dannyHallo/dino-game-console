@@ -157,9 +157,9 @@ int main(void) {
 
 		HeaderInit(dinoHeader, NULL, 3, 22);
 		HeaderInit(fireHeader, NULL, 9, 25);
-		HeaderInit(groundFireHeader, (uint8_t*) GroundFire, 12, 7);
+		HeaderInit(groundFireHeader, NULL, 12, 7);
 		HeaderInit(cloudHeader, (uint8_t*) Cloud, 6, 14);
-		HeaderInit(plantHeader, (uint8_t*) Plant1, 2, 22);
+		HeaderInit(plantHeader, (uint8_t*) Plant1[0], 2, 22);
 
 		dinoHeader = Append(dinoHeader, 4, DinoGroundPos);
 		fireHeader = Append(fireHeader, 24, 52);
@@ -170,8 +170,10 @@ int main(void) {
 		LCD_DrawLine(dinoHeader->y + 19, dinoHeader->x + 3, 10, DRAWMODE_CULL,
 				flipStatus);
 		LCD_LoadObjs(dinoHeader, DRAWMODE_ADD, REPEATMODE_NONE, flipStatus);
-		LCD_Print("little\nentertainment\nkit", 2, 4, DRAWMODE_ADD,
+		LCD_Print("dino\tcan\trun\nreal\tfast!", 2, 4, DRAWMODE_ADD,
 		REPEATMODE_NONE, flipStatus);
+		LCD_Print("\t\t\t\tdev\tbuild", 2, 86, DRAWMODE_ADD,
+				REPEATMODE_NONE, flipStatus);
 
 		while (!GetButtonDown(JUMP_BUTTON))
 			LCD_UpdateFull(&MemDisp);
@@ -236,7 +238,9 @@ int main(void) {
 			ptr = plantHeader;
 			for (;;) {
 				if (ptr->full) {
-					LCD_DrawLine(77, ptr->x + 2, 6, DRAWMODE_CULL, flipStatus);
+					for(uint8_t y = 71; y <= 77; y++){
+						LCD_DrawLine(y, ptr->x + 2, 6, DRAWMODE_CULL, flipStatus);
+					}
 				}
 				// If looped through all / next buffer is empty
 				if (!ptr->next->full || ptr->next == plantHeader) {
@@ -246,6 +250,7 @@ int main(void) {
 			}
 			LCD_DrawLine(dinoHeader->y + 19, dinoHeader->x + 3, 10,
 			DRAWMODE_CULL, flipStatus);
+
 			// Render fire
 			if (!isJumping) {
 				if (GetButtonDown(FIRE_BUTTON)) {
@@ -256,14 +261,18 @@ int main(void) {
 
 			if (fireSubTick > 0) {
 				fireSubTick--;
+
 				if (!isJumping) {
-					fireHeader->bmp = (uint8_t*) Fire[(tick
-							/ (int) (16 / overallSpeed)) % 2];
+					fireHeader->bmp = (uint8_t*) Fire[((fireTickLength - fireSubTick)
+							/ (int) (12 / overallSpeed)) % 2];
 
 					LCD_LoadObjs(fireHeader, DRAWMODE_ADD, REPEATMODE_NONE,
 							flipStatus);
 				}
 			}
+
+			groundFireHeader->bmp = (uint8_t*) GroundFire[(tick
+					/ (int) (16 / overallSpeed)) % 4];
 
 			LCD_LoadObjs(groundFireHeader, DRAWMODE_ADD, REPEATMODE_NONE,
 					flipStatus);
@@ -305,10 +314,6 @@ int main(void) {
 						/ (int) (12 / overallSpeed)) % 2];
 			}
 			LCD_LoadObjs(dinoHeader, DRAWMODE_ADD, REPEATMODE_NONE, flipStatus);
-
-			// Render game process
-			LCD_Print("#  #  #", 8, 4, DRAWMODE_ADD, REPEATMODE_NONE,
-					flipStatus);
 
 			tick++;
 			LCD_UpdateFull(&MemDisp);
