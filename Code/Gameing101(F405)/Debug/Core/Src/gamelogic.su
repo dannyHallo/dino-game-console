@@ -1,7 +1,8 @@
 ../Core/Src/gamelogic.c:10:6:IsOverlapping	16	static
 ../Core/Src/gamelogic.c:18:6:IsFadedOutOfScene	16	static
 ../Core/Src/gamelogic.c:27:10:Append	24	static
-../Core/Src/gamelogic.c:55:10:GenLoopBuf	32	static
-../Core/Src/gamelogic.c:71:6:HeaderInit	32	static
-../Core/Src/gamelogic.c:90:10:ShiftX	24	static
-../Core/Src/gamelogic.c:116:7:Random	16	static
+../Core/Src/gamelogic.c:55:6:DisableAll	24	static
+../Core/Src/gamelogic.c:70:10:GenLoopBuf	32	static
+../Core/Src/gamelogic.c:86:6:HeaderInit	32	static
+../Core/Src/gamelogic.c:105:10:ShiftX	24	static
+../Core/Src/gamelogic.c:131:7:Random	16	static

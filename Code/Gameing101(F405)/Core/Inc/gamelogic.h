@@ -26,7 +26,7 @@ bool IsOverlapping(short x1, short y1, short x2, short y2, short x3, short y3,
 bool IsFadedOutOfScene(struct GameObj *obj);
 
 GameObj* Append(struct GameObj *header, short xPos, short yPos);
-
+void DisableAll(GameObj *header);
 GameObj* GenLoopBuf(uint8_t size);
 
 void HeaderInit(GameObj *header, uint8_t *bmp, uint8_t width, uint8_t height);

@@ -51,6 +51,21 @@ GameObj* Append(GameObj *header, short xPos, short yPos) {
 	return header;
 }
 
+// Set all buffers to empty
+void DisableAll(GameObj *header) {
+	GameObj *ptr = header;
+
+	// If the current pointer is occupied, look for the next pos
+	for (;;) {
+		ptr->full = 0;
+		ptr = ptr->next;
+
+		// Have cycled for a whole loop
+		if (ptr == header)
+			return;
+	}
+}
+
 // Generate loop buffer given certain size
 GameObj* GenLoopBuf(uint8_t size) {
 	GameObj *head = NULL, *cyclic = NULL;

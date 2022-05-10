@@ -11,13 +11,10 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+uint8_t LookupKeyState(uint8_t n);
+
 void KeyScan();
 bool GetButton(uint8_t buttonIndex);
-bool GetButtonDown(uint8_t buttonIndex, bool autoRecovery);
-bool GetButtonUp(uint8_t buttonIndex, bool autoRecovery);
-void EnableButtonDownDetection(uint8_t buttonIndex);
-void DisableButtonDownDetection(uint8_t buttonIndex);
-void EnableButtonUpDetection(uint8_t buttonIndex);
-void DisableButtonUpDetection(uint8_t buttonIndex);
+bool GetButtonDown(uint8_t buttonIndex);
 
 #endif /* INC_BUTTONS_H_ */
