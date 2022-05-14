@@ -37,7 +37,7 @@ GameObj* Append(GameObj *header, uint8_t index, short xPos, short yPos) {
 			ptr->y = yPos;
 			ptr->width = header->width;
 			ptr->height = header->height;
-			ptr->size = header->size;
+			ptr->assetSize = header->assetSize;
 			ptr->index = index;
 			ptr->full = 1;
 			return header->next;
@@ -49,7 +49,7 @@ GameObj* Append(GameObj *header, uint8_t index, short xPos, short yPos) {
 	ptr->y = yPos;
 	ptr->width = header->width;
 	ptr->height = header->height;
-	ptr->size = header->size;
+	ptr->assetSize = header->assetSize;
 	ptr->index = index;
 	ptr->full = 1;
 	return header;
@@ -105,7 +105,8 @@ GameObj* GenLoopBuf(uint8_t size) {
 }
 
 // Initializes the head pointer with the given values, n resets other buffers
-void HeaderInit(GameObj *header, uint8_t *bmpAsset, uint8_t width, uint8_t height, uint8_t size) {
+void HeaderInit(GameObj *header, uint8_t *bmpAsset, uint8_t width,
+		uint8_t height, uint8_t assetSize) {
 	GameObj *ptr = header;
 
 	ptr->bmpAsset = bmpAsset;
@@ -113,7 +114,7 @@ void HeaderInit(GameObj *header, uint8_t *bmpAsset, uint8_t width, uint8_t heigh
 	ptr->y = 0;
 	ptr->width = width;
 	ptr->height = height;
-	ptr->size = size;
+	ptr->assetSize = assetSize;
 	ptr->index = 0;
 	ptr->full = 0;
 
@@ -145,6 +146,29 @@ GameObj* ShiftX(GameObj *header, float byX) {
 		ptr = ptr->next;
 	}
 	return ptr;
+}
+
+GameObj* DisableCurrent(GameObj *header) {
+	GameObj *ptr = header;
+	ptr->full = 0;
+
+//	while (!ptr->next->full) {
+//		ptr = ptr->next;
+//	}
+
+	return ptr;
+}
+
+void ImgIndexRightShift(GameObj *header, bool disableWhenEnd) {
+	if (header->index < header->assetSize - 1) {
+		header->index++;
+		return;
+	}
+	if (disableWhenEnd) {
+		header->index = 0;
+		DisableCurrent(header);
+	}
+
 }
 
 short Random(unsigned long seed, short lowerLim, short upperLim) {

@@ -16,7 +16,7 @@ typedef struct GameObj {
 	uint8_t *bmpAsset;
 	float x, y;
 	uint8_t width, height;
-	uint8_t size, index;
+	uint8_t assetSize, index;
 	bool full;
 	struct GameObj *next;
 } GameObj;
@@ -39,6 +39,10 @@ GameObj* GenLoopBuf(uint8_t size);
 void HeaderInit(GameObj *header, uint8_t *bmpAsset, uint8_t width, uint8_t height, uint8_t size);
 
 GameObj* ShiftX(GameObj *header, float byX);
+
+GameObj* DisableCurrent(GameObj *header);
+
+void ImgIndexRightShift(GameObj *header, bool disableWhenEnd);
 
 short Random(unsigned long seed, short lowerLim, short upperLim);
 

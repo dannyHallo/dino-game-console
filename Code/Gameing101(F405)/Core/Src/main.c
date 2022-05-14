@@ -207,7 +207,7 @@ int main(void) {
 			// Plant generation
 			if (tick - plantSubTick == nextPlantTickDel) {
 				plantHeader = Append(plantHeader, PlantNormal, 96, 59);
-				nextPlantTickDel = Random(tick, 80, 160);
+				nextPlantTickDel = Random(tick, 20, 330);
 				plantSubTick = tick;
 			}
 			// Cloud generation
@@ -310,8 +310,9 @@ int main(void) {
 						if (IsOverlapping(ptr->x, ptr->y, ptr->x + 72,
 								ptr->y + 25, ptr2->x, ptr2->y, ptr2->x + 9,
 								ptr2->y + 21)) {
-							UpdateHeaderBmpIndex(ptr2,
-									tick / (int) (6 / overallSpeed) % 7);
+							if(tick % 6 == 0){
+								ImgIndexRightShift(ptr2, 1);
+							}
 						}
 					}
 					// If looped through all / next buffer is empty
