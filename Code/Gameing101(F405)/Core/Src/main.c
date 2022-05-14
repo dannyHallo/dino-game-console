@@ -37,6 +37,7 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
+#define PARACHUTE_BUTTON 2
 #define FIRE_BUTTON 3
 #define JUMP_BUTTON 4
 
@@ -83,16 +84,21 @@ static void MX_TIM2_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-const float gravity = 0.06;
+// GRAVITY
+const float gravity = 0.08;
 const float initVel = 2;
 const float dinoGroundPos = 58;
+const float parachuteGrag = 0.3;
 static float dinoVel = 0;
 
-const unsigned int fireTickLength = 20;
+// TICK
+const uint8_t fireTickLength = 20;
+const uint16_t softStartTickLength = 200;
+static unsigned long tick, plantSubTick, cloudSubTick, fireSubTick;
 
 static bool isJumping, flipStatus;
 static unsigned short nextPlantTickDel, nextCloudTickDel;
-static long tick, plantSubTick, cloudSubTick, fireSubTick;
+
 static uint8_t groundLength;
 static float overallSpeed;
 
@@ -155,7 +161,7 @@ int main(void) {
 		nextPlantTickDel = 0, nextCloudTickDel = 0;
 		plantSubTick = 0, cloudSubTick = 0;
 		groundLength = 29;
-		tick = -50;
+		tick = 0;
 		overallSpeed = 1;
 		dinoHeader->y = dinoGroundPos;
 
@@ -189,16 +195,28 @@ int main(void) {
 			flipStatus = ((tick / 800) % 3 == 2) ? 1 : 0;
 
 			if (GetButtonDown(JUMP_BUTTON) && !isJumping) {
+
 				dinoVel = initVel;
 				isJumping = 1;
 			}
 
 			if (isJumping) {
+
 				// Dino in air
 				if (dinoHeader->y <= dinoGroundPos) {
 
 					dinoHeader->y -= dinoVel;
-					dinoVel -= gravity;
+					if (GetButton(PARACHUTE_BUTTON) && dinoVel < 0) {
+
+						dinoVel -= gravity;
+						dinoVel += -dinoVel * parachuteGrag;
+
+					} else {
+
+						dinoVel -=
+								GetButton(JUMP_BUTTON) ?
+										(gravity * 0.6) : gravity;
+					}
 				}
 				// Landed
 				else {
@@ -212,17 +230,17 @@ int main(void) {
 			}
 
 			// Plant generation
-			if (tick - plantSubTick == nextPlantTickDel) {
+			if (tick - softStartTickLength - plantSubTick == nextPlantTickDel) {
 				plantHeader = Append(plantHeader, PlantNormal, 96, 59);
 				nextPlantTickDel = Random(tick, 80, 330);
-				plantSubTick = tick;
+				plantSubTick = tick - softStartTickLength;
 			}
 			// Cloud generation
-			if (tick - cloudSubTick == nextCloudTickDel) {
+			if (tick - softStartTickLength - cloudSubTick == nextCloudTickDel) {
 				cloudHeader = Append(cloudHeader, CloudNormal, 96,
 						Random(tick, 12, 20));
 				nextCloudTickDel = Random(tick, 1200, 2000);
-				cloudSubTick = tick;
+				cloudSubTick = tick - softStartTickLength;
 			}
 
 			LCD_Fill(flipStatus);
