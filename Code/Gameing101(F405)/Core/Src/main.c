@@ -83,15 +83,16 @@ static void MX_TIM2_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-const float JumpTickMax = 60;
-const float DinoJumpHeight = 40;
-const float DinoGroundPos = 58;
+const float gravity = 0.06;
+const float initVel = 2;
+const float dinoGroundPos = 58;
+static float dinoVel = 0;
+
 const unsigned int fireTickLength = 20;
 
 static bool isJumping, flipStatus;
-static unsigned short jumpTick, nextPlantTickDel, nextCloudTickDel;
+static unsigned short nextPlantTickDel, nextCloudTickDel;
 static long tick, plantSubTick, cloudSubTick, fireSubTick;
-static short dinoVerticalMovement;
 static uint8_t groundLength;
 static float overallSpeed;
 
@@ -151,11 +152,12 @@ int main(void) {
 
 		/* USER CODE BEGIN 3 */
 		isJumping = 0, flipStatus = 0;
-		jumpTick = 0, nextPlantTickDel = 0, nextCloudTickDel = 0;
+		nextPlantTickDel = 0, nextCloudTickDel = 0;
 		plantSubTick = 0, cloudSubTick = 0;
 		groundLength = 29;
-		tick = -JumpTickMax - 10;
+		tick = -50;
 		overallSpeed = 1;
+		dinoHeader->y = dinoGroundPos;
 
 		HeaderInit(dinoHeader, (uint8_t*) DinoAssets, 3, 22, 7);
 		HeaderInit(fireHeader, (uint8_t*) FireAssets, 9, 25, 2);
@@ -163,7 +165,7 @@ int main(void) {
 		HeaderInit(plantHeader, (uint8_t*) PlantAssets, 2, 22, 7);
 		HeaderInit(lavaHeader, (uint8_t*) LavaAssets, 12, 7, 4);
 
-		dinoHeader = Append(dinoHeader, DinoNormalStand, 4, DinoGroundPos);
+		dinoHeader = Append(dinoHeader, DinoNormalStand, 4, dinoGroundPos);
 		fireHeader = Append(fireHeader, CloudNormal, 24, 52);
 
 		LCD_Fill(flipStatus);
@@ -171,13 +173,14 @@ int main(void) {
 		LCD_DrawLine(dinoHeader->y + 19, dinoHeader->x + 3, 10, DRAWMODE_CULL,
 				flipStatus);
 		LCD_LoadObjs(dinoHeader, DRAWMODE_ADD, REPEATMODE_NONE, flipStatus);
-		LCD_Print("dino\tcan\trun\nreal\tfast!", 2, 4, DRAWMODE_ADD,
-		REPEATMODE_NONE, flipStatus);
-		LCD_Print("\t\t\t\tdev\tbuild", 2, 86, DRAWMODE_ADD,
+
+		LCD_Print("\t\t\t\tdev\tbuild", 2, 85, DRAWMODE_ADD,
 		REPEATMODE_NONE, flipStatus);
 
+		LCD_UpdateFull(&MemDisp);
 		while (!GetButtonDown(JUMP_BUTTON))
-			LCD_UpdateFull(&MemDisp);
+			;
+		dinoVel = initVel;
 		isJumping = 1;
 
 		/// THE TICK LOOP
@@ -185,29 +188,33 @@ int main(void) {
 			// Day and night invertion
 			flipStatus = ((tick / 800) % 3 == 2) ? 1 : 0;
 
-			if (GetButtonDown(JUMP_BUTTON) && !isJumping)
+			if (GetButtonDown(JUMP_BUTTON) && !isJumping) {
+				dinoVel = initVel;
 				isJumping = 1;
+			}
 
-			dinoVerticalMovement = DinoGroundPos;
 			if (isJumping) {
-				if (jumpTick < JumpTickMax / overallSpeed - 1) {
-					jumpTick++;
-					dinoVerticalMovement = jumpTick
-							* (jumpTick - JumpTickMax / overallSpeed)
-							* (4
-									/ ((JumpTickMax / overallSpeed)
-											* (JumpTickMax / overallSpeed)))
-							* DinoJumpHeight + DinoGroundPos;
-				} else {
-					isJumping = 0;
-					jumpTick = 0;
+				// Dino in air
+				if (dinoHeader->y <= dinoGroundPos) {
+
+					dinoHeader->y -= dinoVel;
+					dinoVel -= gravity;
 				}
+				// Landed
+				else {
+
+					isJumping = 0;
+					dinoHeader->y = dinoGroundPos;
+				}
+			} else {
+
+				dinoHeader->y = dinoGroundPos;
 			}
 
 			// Plant generation
 			if (tick - plantSubTick == nextPlantTickDel) {
 				plantHeader = Append(plantHeader, PlantNormal, 96, 59);
-				nextPlantTickDel = Random(tick, 20, 330);
+				nextPlantTickDel = Random(tick, 80, 330);
 				plantSubTick = tick;
 			}
 			// Cloud generation
@@ -235,7 +242,6 @@ int main(void) {
 			// Air objs shift
 			cloudHeader = ShiftX(cloudHeader, -0.1 * overallSpeed);
 
-			dinoHeader->y = dinoVerticalMovement;
 			// Culling masks
 			ptr = plantHeader;
 			for (;;) {
@@ -310,7 +316,7 @@ int main(void) {
 						if (IsOverlapping(ptr->x, ptr->y, ptr->x + 72,
 								ptr->y + 25, ptr2->x, ptr2->y, ptr2->x + 9,
 								ptr2->y + 21)) {
-							if(tick % 6 == 0){
+							if (tick % 2 == 0) {
 								ImgIndexRightShift(ptr2, 1);
 							}
 						}
@@ -362,17 +368,17 @@ int main(void) {
 			LCD_LoadObjs(dinoHeader, DRAWMODE_ADD, REPEATMODE_NONE, flipStatus);
 			LCD_UpdateFull(&MemDisp);
 
-			HAL_Delay(400);
+			HAL_Delay(200);
 
 			// Flip screen
 			for (uint8_t i = 0; i < 2; i++) {
-				HAL_Delay(100);
+				HAL_Delay(80);
 				LCD_Invert();
 				LCD_UpdateFull(&MemDisp);
 			}
 
 			// Redraw Dino
-			while (dinoHeader->y <= DinoGroundPos) {
+			while (dinoHeader->y <= dinoGroundPos) {
 				LCD_Fill(flipStatus);
 				LCD_DrawLine(77, 0, 96, DRAWMODE_ADD, flipStatus);
 				LCD_DrawLine(dinoHeader->y + 19, dinoHeader->x + 3, 10,
@@ -389,6 +395,8 @@ int main(void) {
 				LCD_DrawLine(77, l, 1, DRAWMODE_CULL, flipStatus);
 				LCD_UpdateLine(&MemDisp, 77);
 				HAL_Delay(delayTime);
+				if (GetButtonDown(JUMP_BUTTON))
+					break;
 			}
 
 		}
@@ -417,7 +425,7 @@ void SystemClock_Config(void) {
 	RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
 	RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
 	RCC_OscInitStruct.PLL.PLLM = 4;
-	RCC_OscInitStruct.PLL.PLLN = 108;
+	RCC_OscInitStruct.PLL.PLLN = 96;
 	RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV6;
 	RCC_OscInitStruct.PLL.PLLQ = 4;
 	if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK) {
@@ -460,7 +468,7 @@ static void MX_SPI1_Init(void) {
 	hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
 	hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
 	hspi1.Init.NSS = SPI_NSS_SOFT;
-	hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_16;
+	hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_4;
 	hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
 	hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
 	hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
@@ -579,10 +587,8 @@ static void MX_GPIO_Init(void) {
 	HAL_GPIO_WritePin(DISP_GPIO_Port, DISP_Pin, GPIO_PIN_SET);
 
 	/*Configure GPIO pin Output Level */
-	HAL_GPIO_WritePin(GPIOC, KEY1_LED_Pin | KEY4_LED_Pin, GPIO_PIN_SET);
-
-	/*Configure GPIO pin Output Level */
-	HAL_GPIO_WritePin(GPIOC, KEY2_LED_Pin | KEY3_LED_Pin, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(GPIOC,
+	KEY1_LED_Pin | KEY2_LED_Pin | KEY3_LED_Pin | KEY4_LED_Pin, GPIO_PIN_SET);
 
 	/*Configure GPIO pins : KEY1_Pin KEY2_Pin KEY3_Pin KEY4_Pin */
 	GPIO_InitStruct.Pin = KEY1_Pin | KEY2_Pin | KEY3_Pin | KEY4_Pin;

@@ -84,7 +84,8 @@ void LCD_UpdateFull(LS013B4DN04 *MemDisp) {
 // Display update (Transmit data)
 void LCD_UpdateLine(LS013B4DN04 *MemDisp, uint8_t lineNum) {
 	SendBuf[0] |= printCMD[0]; // M0 High, M2 Low
-	SendBuf[0] ^= 1 << 6;
+//	SendBuf[0] ^= 1 << 6;
+
 	// CS On
 	HAL_GPIO_WritePin(MemDisp->dispGPIO, MemDisp->LCDcs, GPIO_PIN_SET); // Begin
 
