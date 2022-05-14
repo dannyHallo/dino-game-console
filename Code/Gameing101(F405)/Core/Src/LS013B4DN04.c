@@ -118,16 +118,16 @@ void LCD_LoadFull(uint8_t *BMP) {
 	memcpy(DispBuf, BMP, 1152);
 }
 
-void LCD_LoadObjs(GameObj *header, uint8_t drawMode, uint8_t repeatMode, uint8_t index,
-bool flip) {
+void LCD_LoadObjs(GameObj *header, uint8_t drawMode, uint8_t repeatMode,
+		bool flip) {
 	GameObj *ptr = header;
 
 	if (!ptr->full)
 		return;
 
 	for (;;) {
-		LCD_LoadObj(ptr->bmp, ptr->x, ptr->y, ptr->width, ptr->height, drawMode,
-				repeatMode, index, flip);
+		LCD_LoadObj(ptr->bmpAsset, ptr->x, ptr->y, ptr->width, ptr->height, drawMode,
+				repeatMode, ptr->index, flip);
 
 		// If looped through all / next buffer is empty
 		if (!ptr->next->full || ptr->next == header)
@@ -136,8 +136,9 @@ bool flip) {
 	}
 }
 
-void LCD_LoadObj(uint8_t *bmp, float posX, float posY, uint8_t width,
-		uint8_t height, uint8_t drawMode, uint8_t repeatMode,uint8_t index,  bool flip) {
+void LCD_LoadObj(uint8_t *bmpAsset, float posX, float posY, uint8_t width,
+		uint8_t height, uint8_t drawMode, uint8_t repeatMode, uint8_t index,
+		bool flip) {
 	short displayRow;
 	short displayRowOffset;
 
@@ -162,7 +163,7 @@ void LCD_LoadObj(uint8_t *bmp, float posX, float posY, uint8_t width,
 			if (j == width)
 				v2 = 0x00;
 			else
-				v2 = *(bmp + width * y + j + index * (height * width));
+				v2 = *(bmpAsset + width * y + j + index * (height * width));
 
 			if (repeatMode == REPEATMODE_NONE
 					&& (firstXByte + j < 0 || firstXByte + j > 11)) {

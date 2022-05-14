@@ -138,7 +138,7 @@ int main(void) {
 
 	GameObj *dinoHeader = GenLoopBuf(1);
 	GameObj *fireHeader = GenLoopBuf(1);
-	GameObj *groundFireHeader = GenLoopBuf(2);
+	GameObj *lavaHeader = GenLoopBuf(2);
 	GameObj *cloudHeader = GenLoopBuf(2);
 	GameObj *plantHeader = GenLoopBuf(2);
 
@@ -157,22 +157,20 @@ int main(void) {
 		tick = -JumpTickMax - 10;
 		overallSpeed = 1;
 
-		HeaderInit(dinoHeader, NULL, 3, 22, 7);
-		HeaderInit(fireHeader, NULL, 9, 25, 2);
-		HeaderInit(cloudHeader, NULL, 6, 14, 1);
-		HeaderInit(plantHeader, NULL, 2, 22, 7);
-		HeaderInit(groundFireHeader, NULL, 12, 7, 4);
+		HeaderInit(dinoHeader, (uint8_t*) DinoAssets, 3, 22, 7);
+		HeaderInit(fireHeader, (uint8_t*) FireAssets, 9, 25, 2);
+		HeaderInit(cloudHeader, (uint8_t*) CloudAssets, 6, 14, 1);
+		HeaderInit(plantHeader, (uint8_t*) PlantAssets, 2, 22, 7);
+		HeaderInit(lavaHeader, (uint8_t*) LavaAssets, 12, 7, 4);
 
-		dinoHeader = Append(dinoHeader, (uint8_t*) DinoAssets, 4,
-				DinoGroundPos);
-		fireHeader = Append(fireHeader, (uint8_t*) Fire, 24, 52);
+		dinoHeader = Append(dinoHeader, DinoNormalStand, 4, DinoGroundPos);
+		fireHeader = Append(fireHeader, CloudNormal, 24, 52);
 
 		LCD_Fill(flipStatus);
 		LCD_DrawLine(77, 0, 29, DRAWMODE_ADD, flipStatus);
 		LCD_DrawLine(dinoHeader->y + 19, dinoHeader->x + 3, 10, DRAWMODE_CULL,
 				flipStatus);
-		LCD_LoadObjs(dinoHeader, DRAWMODE_ADD, REPEATMODE_NONE, DinoNormalStand,
-				flipStatus);
+		LCD_LoadObjs(dinoHeader, DRAWMODE_ADD, REPEATMODE_NONE, flipStatus);
 		LCD_Print("dino\tcan\trun\nreal\tfast!", 2, 4, DRAWMODE_ADD,
 		REPEATMODE_NONE, flipStatus);
 		LCD_Print("\t\t\t\tdev\tbuild", 2, 86, DRAWMODE_ADD,
@@ -208,13 +206,13 @@ int main(void) {
 
 			// Plant generation
 			if (tick - plantSubTick == nextPlantTickDel) {
-				plantHeader = Append(plantHeader, (uint8_t*) Plant1[0], 96, 59);
+				plantHeader = Append(plantHeader, PlantNormal, 96, 59);
 				nextPlantTickDel = Random(tick, 80, 160);
 				plantSubTick = tick;
 			}
 			// Cloud generation
 			if (tick - cloudSubTick == nextCloudTickDel) {
-				cloudHeader = Append(cloudHeader, (uint8_t*) Cloud, 96,
+				cloudHeader = Append(cloudHeader, CloudNormal, 96,
 						Random(tick, 12, 20));
 				nextCloudTickDel = Random(tick, 1200, 2000);
 				cloudSubTick = tick;
@@ -233,7 +231,7 @@ int main(void) {
 
 			// Ground objs shift
 			plantHeader = ShiftX(plantHeader, -1 * overallSpeed);
-			groundFireHeader = ShiftX(groundFireHeader, -1 * overallSpeed);
+			lavaHeader = ShiftX(lavaHeader, -1 * overallSpeed);
 			// Air objs shift
 			cloudHeader = ShiftX(cloudHeader, -0.1 * overallSpeed);
 
@@ -260,7 +258,7 @@ int main(void) {
 			if (!isJumping) {
 				if (GetButtonDown(FIRE_BUTTON)) {
 					fireSubTick = fireTickLength;
-					groundFireHeader = Append(groundFireHeader, NULL, 57, 70);
+					lavaHeader = Append(lavaHeader, 0, 57, 70);
 				}
 			}
 
@@ -268,21 +266,23 @@ int main(void) {
 				fireSubTick--;
 
 				if (!isJumping) {
-					LCD_LoadObjs(fireHeader, DRAWMODE_ADD, REPEATMODE_NONE,
+					UpdateHeaderBmpIndex(fireHeader,
 							((fireTickLength - fireSubTick)
-									/ (int) (12 / overallSpeed)) % 2,
+									/ (int) (12 / overallSpeed)) % 2);
+					LCD_LoadObjs(fireHeader, DRAWMODE_ADD, REPEATMODE_NONE,
 							flipStatus);
 				}
 			}
 
-			LCD_LoadObjs(groundFireHeader, DRAWMODE_ADD, REPEATMODE_NONE,
-					(tick / (int) (16 / overallSpeed)) % 4, flipStatus);
+			UpdateHeaderBmpIndex(lavaHeader,
+					(tick / (int) (16 / overallSpeed)) % 4);
+			LCD_LoadObjs(lavaHeader, DRAWMODE_ADD, REPEATMODE_NONE, flipStatus);
 
 			LCD_LoadObjs(plantHeader, DRAWMODE_ADD, REPEATMODE_NONE,
-					PlantNormal, flipStatus);
+					flipStatus);
 
 			LCD_LoadObjs(cloudHeader, DRAWMODE_ADD, REPEATMODE_NONE,
-			CloudNormal, flipStatus);
+					flipStatus);
 
 			// Loop through plants, check death
 			ptr = plantHeader;
@@ -301,48 +301,51 @@ int main(void) {
 				ptr = ptr->next;
 			}
 
-//			// Loop through GroundFires and Plants, shrink plants
-//			ptr = groundFireHeader;
-//			ptr2 = plantHeader;
-//			for (;;) {
-//				for (;;) {
-//					if (ptr->full && ptr2->full) {
-//						if (IsOverlapping(ptr->x, ptr->y, ptr->x + 72,
-//								ptr->y + 25, ptr2->x, ptr2->y, ptr2->x + 9,
-//								ptr2->y + 21)) {
-//							UpdateHeaderBmp(ptr2,
-//									(uint8_t*) Plant1[tick
-//											/ (int) (6 / overallSpeed) % 7]);
-//						}
-//					}
-//					// If looped through all / next buffer is empty
-//					if (!ptr2->next->full || ptr2->next == plantHeader) {
-//						break;
-//					}
-//					ptr2 = ptr2->next;
-//				}
-//				// If looped through all / next buffer is empty
-//				if (!ptr->next->full || ptr->next == groundFireHeader) {
-//					break;
-//				}
-//				ptr = ptr->next;
-//			}
-
-// Render dino!
-// Dino is jumping
-			if (isJumping) {
-				LCD_LoadObjs(dinoHeader, DRAWMODE_ADD, REPEATMODE_NONE,
-				DinoNormalStand, flipStatus);
+			// Loop through GroundFires and Plants, shrink plants
+			ptr = lavaHeader;
+			ptr2 = plantHeader;
+			for (;;) {
+				for (;;) {
+					if (ptr->full && ptr2->full) {
+						if (IsOverlapping(ptr->x, ptr->y, ptr->x + 72,
+								ptr->y + 25, ptr2->x, ptr2->y, ptr2->x + 9,
+								ptr2->y + 21)) {
+							UpdateHeaderBmpIndex(ptr2,
+									tick / (int) (6 / overallSpeed) % 7);
+						}
+					}
+					// If looped through all / next buffer is empty
+					if (!ptr2->next->full || ptr2->next == plantHeader) {
+						break;
+					}
+					ptr2 = ptr2->next;
+				}
+				// If looped through all / next buffer is empty
+				if (!ptr->next->full || ptr->next == lavaHeader) {
+					break;
+				}
+				ptr = ptr->next;
 			}
-//			// Fire dino
-//			else if (fireSubTick > 0) {
-//				LCD_LoadObjs(dinoHeader, DRAWMODE_ADD, REPEATMODE_NONE,
-//						(tick / (int) (12 / overallSpeed)) % 2 + 1, flipStatus);
-//			}
-			// Dino is running normally
-			else {
+
+			// Jumping
+			if (isJumping) {
+				UpdateHeaderBmpIndex(dinoHeader, DinoNormalStand);
 				LCD_LoadObjs(dinoHeader, DRAWMODE_ADD, REPEATMODE_NONE,
-						(tick / (int) (12 / overallSpeed)) % 2 + 1, flipStatus);
+						flipStatus);
+			}
+			// Firing
+			else if (fireSubTick > 0) {
+				UpdateHeaderBmpIndex(dinoHeader,
+						(tick / (int) (12 / overallSpeed)) % 2 + 4);
+				LCD_LoadObjs(dinoHeader, DRAWMODE_ADD, REPEATMODE_NONE,
+						flipStatus);
+			}
+			// Running normally
+			else {
+				UpdateHeaderBmpIndex(dinoHeader,
+						(tick / (int) (12 / overallSpeed)) % 2 + 1);
+				LCD_LoadObjs(dinoHeader, DRAWMODE_ADD, REPEATMODE_NONE,
+						flipStatus);
 			}
 
 			tick++;
@@ -351,10 +354,11 @@ int main(void) {
 
 		// Dead handler (outer loop)
 		if (0) {
-			Dead:
-			LCD_DrawLine(dinoHeader->y + 19, dinoHeader->x + 3, 10,
+			Dead: LCD_DrawLine(dinoHeader->y + 19, dinoHeader->x + 3, 10,
 			DRAWMODE_CULL, flipStatus);
-			LCD_LoadObjs(dinoHeader, DRAWMODE_ADD, REPEATMODE_NONE, DinoDead, flipStatus);
+
+			UpdateHeaderBmpIndex(dinoHeader, DinoDead);
+			LCD_LoadObjs(dinoHeader, DRAWMODE_ADD, REPEATMODE_NONE, flipStatus);
 			LCD_UpdateFull(&MemDisp);
 
 			HAL_Delay(400);
@@ -373,7 +377,7 @@ int main(void) {
 				LCD_DrawLine(dinoHeader->y + 19, dinoHeader->x + 3, 10,
 				DRAWMODE_CULL, flipStatus);
 				LCD_LoadObjs(dinoHeader, DRAWMODE_ADD, REPEATMODE_NONE,
-						DinoDead, flipStatus);
+						flipStatus);
 				HAL_Delay(5);
 				LCD_UpdateFull(&MemDisp);
 				dinoHeader->y++;

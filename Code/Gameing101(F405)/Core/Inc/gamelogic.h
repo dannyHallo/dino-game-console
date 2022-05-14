@@ -13,7 +13,7 @@
 #include <stdint.h>
 
 typedef struct GameObj {
-	uint8_t *bmp;
+	uint8_t *bmpAsset;
 	float x, y;
 	uint8_t width, height;
 	uint8_t size, index;
@@ -26,17 +26,17 @@ bool IsOverlapping(short x1, short y1, short x2, short y2, short x3, short y3,
 
 bool IsFadedOutOfScene(struct GameObj *obj);
 
-GameObj* Append(struct GameObj *header, uint8_t *bmp, short xPos, short yPos);
+GameObj* Append(struct GameObj *header, uint8_t index, short xPos, short yPos);
 
-void UpdateHeaderBmp(GameObj *header, uint8_t *bmp);
+void UpdateHeaderBmpIndex(GameObj *header, uint8_t index);
 
-void UpdateAllBmps(GameObj *header, uint8_t *bmp);
+void UpdateAllBmpIndexs(GameObj *header, uint8_t index);
 
 void DisableAll(GameObj *header);
 
 GameObj* GenLoopBuf(uint8_t size);
 
-void HeaderInit(GameObj *header, uint8_t *bmp, uint8_t width, uint8_t height, uint8_t size);
+void HeaderInit(GameObj *header, uint8_t *bmpAsset, uint8_t width, uint8_t height, uint8_t size);
 
 GameObj* ShiftX(GameObj *header, float byX);
 

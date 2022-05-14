@@ -24,7 +24,7 @@ bool IsFadedOutOfScene(GameObj *obj) {
 }
 
 // Append buffer in loop, if buffers are all occupied, use the first buffer
-GameObj* Append(GameObj *header, uint8_t *bmp, short xPos, short yPos) {
+GameObj* Append(GameObj *header, uint8_t index, short xPos, short yPos) {
 	GameObj *ptr = header;
 
 	// If the current pointer is occupied, look for the next pos
@@ -32,39 +32,39 @@ GameObj* Append(GameObj *header, uint8_t *bmp, short xPos, short yPos) {
 		ptr = ptr->next;
 		// Have cycled for a whole loop
 		if (ptr == header) {
-			ptr->bmp = bmp;
+			ptr->bmpAsset = header->bmpAsset;
 			ptr->x = xPos;
 			ptr->y = yPos;
 			ptr->width = header->width;
 			ptr->height = header->height;
 			ptr->size = header->size;
-			ptr->index = 0;
+			ptr->index = index;
 			ptr->full = 1;
 			return header->next;
 		}
 	}
 
-	ptr->bmp = bmp;
+	ptr->bmpAsset = header->bmpAsset;
 	ptr->x = xPos;
 	ptr->y = yPos;
 	ptr->width = header->width;
 	ptr->height = header->height;
 	ptr->size = header->size;
-	ptr->index = 0;
+	ptr->index = index;
 	ptr->full = 1;
 	return header;
 }
 
-void UpdateHeaderBmp(GameObj *header, uint8_t *bmp) {
-	header->bmp = bmp;
+void UpdateHeaderBmpIndex(GameObj *header, uint8_t index) {
+	header->index = index;
 }
 
-void UpdateAllBmps(GameObj *header, uint8_t *bmp) {
+void UpdateAllBmpsIndexs(GameObj *header, uint8_t index) {
 	GameObj *ptr = header;
 
 	// If the current pointer is occupied, look for the next pos
 	for (;;) {
-		ptr->bmp = bmp;
+		ptr->index = index;
 		ptr = ptr->next;
 
 		// Have cycled for a whole loop
@@ -105,10 +105,10 @@ GameObj* GenLoopBuf(uint8_t size) {
 }
 
 // Initializes the head pointer with the given values, n resets other buffers
-void HeaderInit(GameObj *header, uint8_t *bmp, uint8_t width, uint8_t height, uint8_t size) {
+void HeaderInit(GameObj *header, uint8_t *bmpAsset, uint8_t width, uint8_t height, uint8_t size) {
 	GameObj *ptr = header;
 
-	ptr->bmp = bmp;
+	ptr->bmpAsset = bmpAsset;
 	ptr->x = 0;
 	ptr->y = 0;
 	ptr->width = width;
