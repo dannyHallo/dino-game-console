@@ -24,7 +24,7 @@ bool IsFadedOutOfScene(GameObj *obj) {
 }
 
 // Append buffer in loop, if buffers are all occupied, use the first buffer
-GameObj* Append(GameObj *header, short xPos, short yPos) {
+GameObj* Append(GameObj *header, uint8_t *bmp, short xPos, short yPos) {
 	GameObj *ptr = header;
 
 	// If the current pointer is occupied, look for the next pos
@@ -32,23 +32,45 @@ GameObj* Append(GameObj *header, short xPos, short yPos) {
 		ptr = ptr->next;
 		// Have cycled for a whole loop
 		if (ptr == header) {
-			ptr->bmp = header->bmp;
+			ptr->bmp = bmp;
 			ptr->x = xPos;
 			ptr->y = yPos;
 			ptr->width = header->width;
 			ptr->height = header->height;
+			ptr->size = header->size;
+			ptr->index = 0;
 			ptr->full = 1;
 			return header->next;
 		}
 	}
 
-	ptr->bmp = header->bmp;
+	ptr->bmp = bmp;
 	ptr->x = xPos;
 	ptr->y = yPos;
 	ptr->width = header->width;
 	ptr->height = header->height;
+	ptr->size = header->size;
+	ptr->index = 0;
 	ptr->full = 1;
 	return header;
+}
+
+void UpdateHeaderBmp(GameObj *header, uint8_t *bmp) {
+	header->bmp = bmp;
+}
+
+void UpdateAllBmps(GameObj *header, uint8_t *bmp) {
+	GameObj *ptr = header;
+
+	// If the current pointer is occupied, look for the next pos
+	for (;;) {
+		ptr->bmp = bmp;
+		ptr = ptr->next;
+
+		// Have cycled for a whole loop
+		if (ptr == header)
+			return;
+	}
 }
 
 // Set all buffers to empty
@@ -83,7 +105,7 @@ GameObj* GenLoopBuf(uint8_t size) {
 }
 
 // Initializes the head pointer with the given values, n resets other buffers
-void HeaderInit(GameObj *header, uint8_t *bmp, uint8_t width, uint8_t height) {
+void HeaderInit(GameObj *header, uint8_t *bmp, uint8_t width, uint8_t height, uint8_t size) {
 	GameObj *ptr = header;
 
 	ptr->bmp = bmp;
@@ -91,14 +113,11 @@ void HeaderInit(GameObj *header, uint8_t *bmp, uint8_t width, uint8_t height) {
 	ptr->y = 0;
 	ptr->width = width;
 	ptr->height = height;
+	ptr->size = size;
+	ptr->index = 0;
 	ptr->full = 0;
 
-	for (;;) {
-		if (ptr->next == header)
-			return;
-		ptr = ptr->next;
-		ptr->full = 0;
-	}
+	DisableAll(ptr);
 }
 
 // Shift all buffers and return the first active pointer

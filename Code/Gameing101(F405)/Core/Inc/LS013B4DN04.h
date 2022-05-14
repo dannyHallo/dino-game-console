@@ -36,11 +36,11 @@ void LCD_UpdateLine(LS013B4DN04 *MemDisp, uint8_t lineNum);
 
 void LCD_LoadFull(uint8_t *BMP);
 
-void LCD_LoadObjs(GameObj *header, uint8_t drawMode, uint8_t repeatMode,
+void LCD_LoadObjs(GameObj *header, uint8_t drawMode, uint8_t repeatMode, uint8_t index,
 bool flip);
 
 void LCD_LoadObj(uint8_t *bmp, float posX, float posY, uint8_t width,
-		uint8_t height, uint8_t drawMode, uint8_t repeatMode, bool flip);
+		uint8_t height, uint8_t drawMode, uint8_t repeatMode, uint8_t index, bool flip);
 
 void LCD_DrawLine(uint8_t startingRow, int startingPoint, uint8_t length,
 		uint8_t drawMode, bool flip);
