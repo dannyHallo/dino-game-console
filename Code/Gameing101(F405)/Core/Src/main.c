@@ -94,10 +94,12 @@ static float dinoVel = 0;
 // TICK
 const uint8_t fireTickLength = 20;
 const uint16_t softStartTickLength = 200;
-static unsigned long tick, plantSubTick, cloudSubTick, fireSubTick;
+static uint32_t tick, plantTick, cloudTick, fireTick, bumpOrDepressionTick,
+		dirtTexTick;
 
 static bool isJumping, flipStatus;
-static unsigned short nextPlantTickDel, nextCloudTickDel;
+static uint16_t nextPlantTickDel, nextCloudTickDel, nextBumpOrDepressionTickDel,
+		nextDirtTexTickDel;
 
 static uint8_t groundLength;
 static float overallSpeed;
@@ -145,9 +147,11 @@ int main(void) {
 
 	GameObj *dinoHeader = GenLoopBuf(1);
 	GameObj *fireHeader = GenLoopBuf(1);
-	GameObj *lavaHeader = GenLoopBuf(2);
+	GameObj *lavaHeader = GenLoopBuf(6);
 	GameObj *cloudHeader = GenLoopBuf(2);
-	GameObj *plantHeader = GenLoopBuf(2);
+	GameObj *plantHeader = GenLoopBuf(4);
+	GameObj *dirtTexHeader = GenLoopBuf(12);
+	GameObj *bumpAndDepressionHeader = GenLoopBuf(4);
 
 	/* USER CODE END 2 */
 
@@ -157,9 +161,19 @@ int main(void) {
 		/* USER CODE END WHILE */
 
 		/* USER CODE BEGIN 3 */
-		isJumping = 0, flipStatus = 0;
-		nextPlantTickDel = 0, nextCloudTickDel = 0;
-		plantSubTick = 0, cloudSubTick = 0;
+		isJumping = 0;
+		flipStatus = 0;
+
+		nextPlantTickDel = 0;
+		nextCloudTickDel = 0;
+		nextDirtTexTickDel = 0;
+		nextBumpOrDepressionTickDel = 0;
+
+		plantTick = 0;
+		cloudTick = 0;
+		dirtTexTick = 0;
+		bumpOrDepressionTick = 0;
+
 		groundLength = 29;
 		tick = 0;
 		overallSpeed = 1;
@@ -170,6 +184,9 @@ int main(void) {
 		HeaderInit(cloudHeader, (uint8_t*) CloudAssets, 6, 14, 1);
 		HeaderInit(plantHeader, (uint8_t*) PlantAssets, 2, 22, 5);
 		HeaderInit(lavaHeader, (uint8_t*) LavaAssets, 9, 6, 4);
+		HeaderInit(dirtTexHeader, (uint8_t*) DirtTextureAssets, 1, 1, 6);
+		HeaderInit(bumpAndDepressionHeader, (uint8_t*) BumpAndDepressionAssets,
+				2, 3, 2);
 
 		dinoHeader = Append(dinoHeader, DinoNormalStand, 4, dinoGroundPos);
 		fireHeader = Append(fireHeader, CloudNormal, 24, 52);
@@ -193,6 +210,7 @@ int main(void) {
 		while (1) {
 			// Day and night invertion
 			flipStatus = ((tick / 800) % 3 == 2) ? 1 : 0;
+			LCD_Fill(flipStatus);
 
 			if (GetButtonDown(JUMP_BUTTON) && !isJumping) {
 
@@ -230,37 +248,65 @@ int main(void) {
 			}
 
 			// Plant generation
-			if (tick - softStartTickLength - plantSubTick == nextPlantTickDel) {
+			if (tick - softStartTickLength - plantTick == nextPlantTickDel) {
 				plantHeader = Append(plantHeader, PlantNormal, 96, 59);
 				nextPlantTickDel = Random(tick, 80, 330);
-				plantSubTick = tick - softStartTickLength;
+				plantTick = tick - softStartTickLength;
 			}
 			// Cloud generation
-			if (tick - softStartTickLength - cloudSubTick == nextCloudTickDel) {
+			if (tick - softStartTickLength - cloudTick == nextCloudTickDel) {
 				cloudHeader = Append(cloudHeader, CloudNormal, 96,
 						Random(tick, 12, 20));
 				nextCloudTickDel = Random(tick, 1200, 2000);
-				cloudSubTick = tick - softStartTickLength;
+				cloudTick = tick - softStartTickLength;
+			}
+			// Dirt texture generation
+			if (tick - softStartTickLength - dirtTexTick
+					== nextDirtTexTickDel) {
+
+				dirtTexHeader = Append(dirtTexHeader, Random(tick, 2, 6), 96,
+						Random(tick, 83, 87));
+
+				nextDirtTexTickDel = Random(tick, 8, 30);
+				dirtTexTick = tick - softStartTickLength;
+			}
+			// Bumps and depressions generation
+			if (tick - softStartTickLength - bumpOrDepressionTick
+					== nextBumpOrDepressionTickDel) {
+				if (Random(tick, 0, 1)) {
+					bumpAndDepressionHeader = Append(bumpAndDepressionHeader,
+					Bump, 96, 75);
+				} else {
+					bumpAndDepressionHeader = Append(bumpAndDepressionHeader,
+					Depression, 96, 77);
+				}
+
+				nextBumpOrDepressionTickDel = Random(tick, 20, 150);
+				bumpOrDepressionTick = tick - softStartTickLength;
 			}
 
-			LCD_Fill(flipStatus);
-
-			// Draw ground
+			// Roll ground plane
 			if (groundLength < 96) {
+
 				LCD_DrawLine(77, 0, groundLength, DRAWMODE_ADD, flipStatus);
 				groundLength++;
 			} else {
-				// Reset canvas
+
+				// Still ground plane
 				LCD_DrawLine(77, 0, 96, DRAWMODE_ADD, flipStatus);
 			}
 
 			// Ground objs shift
 			plantHeader = ShiftX(plantHeader, -1 * overallSpeed);
 			lavaHeader = ShiftX(lavaHeader, -1 * overallSpeed);
+			dirtTexHeader = ShiftX(dirtTexHeader, -1 * overallSpeed);
+			bumpAndDepressionHeader = ShiftX(bumpAndDepressionHeader,
+					-1 * overallSpeed);
+
 			// Air objs shift
 			cloudHeader = ShiftX(cloudHeader, -0.1 * overallSpeed);
 
-			// Culling masks
+			// Cull plant
 			ptr = plantHeader;
 			for (;;) {
 				if (ptr->full) {
@@ -270,28 +316,44 @@ int main(void) {
 					}
 				}
 				// If looped through all / next buffer is empty
-				if (!ptr->next->full || ptr->next == plantHeader) {
+				if (!ptr->next->full || ptr->next == plantHeader)
 					break;
-				}
+
 				ptr = ptr->next;
 			}
+
+			// Cull bumps
+			ptr = bumpAndDepressionHeader;
+			for (;;) {
+				if (ptr->full) {
+
+					LCD_DrawLine(77, ptr->x + 2, 6, DRAWMODE_CULL, flipStatus);
+				}
+				// If looped through all / next buffer is empty
+				if (!ptr->next->full || ptr->next == bumpAndDepressionHeader)
+					break;
+
+				ptr = ptr->next;
+			}
+
+			// Cull dino
 			LCD_DrawLine(dinoHeader->y + 19, dinoHeader->x + 3, 10,
 			DRAWMODE_CULL, flipStatus);
 
 			// Render fire
 			if (!isJumping) {
 				if (GetButtonDown(FIRE_BUTTON)) {
-					fireSubTick = fireTickLength;
+					fireTick = fireTickLength;
 					lavaHeader = Append(lavaHeader, 0, 57, 71);
 				}
 			}
 
-			if (fireSubTick > 0) {
-				fireSubTick--;
+			if (fireTick > 0) {
+				fireTick--;
 
 				if (!isJumping) {
 					UpdateHeaderBmpIndex(fireHeader,
-							((fireTickLength - fireSubTick)
+							((fireTickLength - fireTick)
 									/ (int) (12 / overallSpeed)) % 2);
 					LCD_LoadObjs(fireHeader, DRAWMODE_ADD, REPEATMODE_NONE,
 							flipStatus);
@@ -300,12 +362,16 @@ int main(void) {
 
 			UpdateHeaderBmpIndex(lavaHeader,
 					(tick / (int) (16 / overallSpeed)) % 4);
+
 			LCD_LoadObjs(lavaHeader, DRAWMODE_ADD, REPEATMODE_NONE, flipStatus);
 
 			LCD_LoadObjs(plantHeader, DRAWMODE_ADD, REPEATMODE_NONE,
 					flipStatus);
-
 			LCD_LoadObjs(cloudHeader, DRAWMODE_ADD, REPEATMODE_NONE,
+					flipStatus);
+			LCD_LoadObjs(dirtTexHeader, DRAWMODE_ADD, REPEATMODE_NONE,
+					flipStatus);
+			LCD_LoadObjs(bumpAndDepressionHeader, DRAWMODE_ADD, REPEATMODE_NONE,
 					flipStatus);
 
 			// Loop through plants, check death
@@ -359,7 +425,7 @@ int main(void) {
 						flipStatus);
 			}
 			// Firing
-			else if (fireSubTick > 0) {
+			else if (fireTick > 0) {
 				UpdateHeaderBmpIndex(dinoHeader,
 						(tick / (int) (12 / overallSpeed)) % 2 + 4);
 				LCD_LoadObjs(dinoHeader, DRAWMODE_ADD, REPEATMODE_NONE,
