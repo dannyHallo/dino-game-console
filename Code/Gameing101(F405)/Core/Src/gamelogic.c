@@ -59,7 +59,7 @@ void UpdateHeaderBmpIndex(GameObj *header, uint8_t index) {
 	header->index = index;
 }
 
-void UpdateAllBmpsIndexs(GameObj *header, uint8_t index) {
+void UpdateAllBmpIndexs(GameObj *header, uint8_t index) {
 	GameObj *ptr = header;
 
 	// If the current pointer is occupied, look for the next pos

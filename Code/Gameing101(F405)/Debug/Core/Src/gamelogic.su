@@ -2,7 +2,7 @@
 ../Core/Src/gamelogic.c:18:6:IsFadedOutOfScene	16	static
 ../Core/Src/gamelogic.c:27:10:Append	32	static
 ../Core/Src/gamelogic.c:58:6:UpdateHeaderBmpIndex	16	static
-../Core/Src/gamelogic.c:62:6:UpdateAllBmpsIndexs	24	static
+../Core/Src/gamelogic.c:62:6:UpdateAllBmpIndexs	24	static
 ../Core/Src/gamelogic.c:77:6:DisableAll	24	static
 ../Core/Src/gamelogic.c:92:10:GenLoopBuf	32	static
 ../Core/Src/gamelogic.c:108:6:HeaderInit	32	static

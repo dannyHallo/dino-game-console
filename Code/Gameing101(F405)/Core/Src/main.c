@@ -147,7 +147,7 @@ int main(void) {
 
 	GameObj *dinoHeader = GenLoopBuf(1);
 	GameObj *fireHeader = GenLoopBuf(1);
-	GameObj *lavaHeader = GenLoopBuf(6);
+	GameObj *lavaHeader = GenLoopBuf(2);
 	GameObj *cloudHeader = GenLoopBuf(2);
 	GameObj *plantHeader = GenLoopBuf(4);
 	GameObj *dirtTexHeader = GenLoopBuf(12);
@@ -186,7 +186,7 @@ int main(void) {
 		HeaderInit(lavaHeader, (uint8_t*) LavaAssets, 9, 6, 4);
 		HeaderInit(dirtTexHeader, (uint8_t*) DirtTextureAssets, 1, 1, 6);
 		HeaderInit(bumpAndDepressionHeader, (uint8_t*) BumpAndDepressionAssets,
-				2, 3, 2);
+				1, 2, 2);
 
 		dinoHeader = Append(dinoHeader, DinoNormalStand, 4, dinoGroundPos);
 		fireHeader = Append(fireHeader, CloudNormal, 24, 52);
@@ -278,7 +278,7 @@ int main(void) {
 					Bump, 96, 75);
 				} else {
 					bumpAndDepressionHeader = Append(bumpAndDepressionHeader,
-					Depression, 96, 77);
+					Depression, 96, 78);
 				}
 
 				nextBumpOrDepressionTickDel = Random(tick, 20, 150);
@@ -327,7 +327,7 @@ int main(void) {
 			for (;;) {
 				if (ptr->full) {
 
-					LCD_DrawLine(77, ptr->x + 2, 6, DRAWMODE_CULL, flipStatus);
+					LCD_DrawLine(77, ptr->x + 1, 6, DRAWMODE_CULL, flipStatus);
 				}
 				// If looped through all / next buffer is empty
 				if (!ptr->next->full || ptr->next == bumpAndDepressionHeader)
@@ -360,7 +360,7 @@ int main(void) {
 				}
 			}
 
-			UpdateHeaderBmpIndex(lavaHeader,
+			UpdateAllBmpIndexs(lavaHeader,
 					(tick / (int) (16 / overallSpeed)) % 4);
 
 			LCD_LoadObjs(lavaHeader, DRAWMODE_ADD, REPEATMODE_NONE, flipStatus);
