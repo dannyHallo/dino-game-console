@@ -168,8 +168,8 @@ int main(void) {
 		HeaderInit(dinoHeader, (uint8_t*) DinoAssets, 3, 22, 7);
 		HeaderInit(fireHeader, (uint8_t*) FireAssets, 9, 25, 2);
 		HeaderInit(cloudHeader, (uint8_t*) CloudAssets, 6, 14, 1);
-		HeaderInit(plantHeader, (uint8_t*) PlantAssets, 2, 22, 7);
-		HeaderInit(lavaHeader, (uint8_t*) LavaAssets, 12, 7, 4);
+		HeaderInit(plantHeader, (uint8_t*) PlantAssets, 2, 22, 5);
+		HeaderInit(lavaHeader, (uint8_t*) LavaAssets, 9, 6, 4);
 
 		dinoHeader = Append(dinoHeader, DinoNormalStand, 4, dinoGroundPos);
 		fireHeader = Append(fireHeader, CloudNormal, 24, 52);
@@ -180,7 +180,7 @@ int main(void) {
 				flipStatus);
 		LCD_LoadObjs(dinoHeader, DRAWMODE_ADD, REPEATMODE_NONE, flipStatus);
 
-		LCD_Print("\t\t\t\tdev\tbuild", 2, 85, DRAWMODE_ADD,
+		LCD_Print("dev\tver.", 40, 85, DRAWMODE_ADD,
 		REPEATMODE_NONE, flipStatus);
 
 		LCD_UpdateFull(&MemDisp);
@@ -282,7 +282,7 @@ int main(void) {
 			if (!isJumping) {
 				if (GetButtonDown(FIRE_BUTTON)) {
 					fireSubTick = fireTickLength;
-					lavaHeader = Append(lavaHeader, 0, 57, 70);
+					lavaHeader = Append(lavaHeader, 0, 57, 71);
 				}
 			}
 
@@ -311,7 +311,7 @@ int main(void) {
 			// Loop through plants, check death
 			ptr = plantHeader;
 			for (;;) {
-				if (ptr->full) {
+				if (ptr->full && ptr->index == PlantNormal) {
 					if (IsOverlapping(dinoHeader->x + 3, dinoHeader->y,
 							dinoHeader->x + 23 - 7, dinoHeader->y + 21 - 4,
 							ptr->x, 59, ptr->x + 9, 59 + 21)) {
@@ -334,7 +334,7 @@ int main(void) {
 						if (IsOverlapping(ptr->x, ptr->y, ptr->x + 72,
 								ptr->y + 25, ptr2->x, ptr2->y, ptr2->x + 9,
 								ptr2->y + 21)) {
-							if (tick % 2 == 0) {
+							if (tick % 10 == 0) {
 								ImgIndexRightShift(ptr2, 1);
 							}
 						}
@@ -396,16 +396,17 @@ int main(void) {
 			}
 
 			// Redraw Dino
-			while (dinoHeader->y <= dinoGroundPos) {
+			while (dinoHeader->y < dinoGroundPos) {
 				LCD_Fill(flipStatus);
 				LCD_DrawLine(77, 0, 96, DRAWMODE_ADD, flipStatus);
+				dinoHeader->y++;
 				LCD_DrawLine(dinoHeader->y + 19, dinoHeader->x + 3, 10,
 				DRAWMODE_CULL, flipStatus);
 				LCD_LoadObjs(dinoHeader, DRAWMODE_ADD, REPEATMODE_NONE,
 						flipStatus);
 				HAL_Delay(5);
 				LCD_UpdateFull(&MemDisp);
-				dinoHeader->y++;
+
 			}
 
 			for (uint8_t l = 96; l > 28; l--) {
@@ -486,7 +487,7 @@ static void MX_SPI1_Init(void) {
 	hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
 	hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
 	hspi1.Init.NSS = SPI_NSS_SOFT;
-	hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_4;
+	hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_8;
 	hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
 	hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
 	hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
@@ -518,9 +519,9 @@ static void MX_TIM1_Init(void) {
 
 	/* USER CODE END TIM1_Init 1 */
 	htim1.Instance = TIM1;
-	htim1.Init.Prescaler = 36000 - 1;
+	htim1.Init.Prescaler = 32000 - 1;
 	htim1.Init.CounterMode = TIM_COUNTERMODE_UP;
-	htim1.Init.Period = 1000 - 1;
+	htim1.Init.Period = 100 - 1;
 	htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
 	htim1.Init.RepetitionCounter = 0;
 	htim1.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
