@@ -23,10 +23,8 @@
 /* USER CODE BEGIN Includes */
 #include "LS013B4DN04.h"
 #include "buttons.h"
-#include "image.h"
-#include "gamelogic.h"
-#include <stdlib.h>
-#include <math.h>
+#include "dino_game.h"
+
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -37,10 +35,6 @@
 
 /* Private define ------------------------------------------------------------*/
 /* USER CODE BEGIN PD */
-#define PARACHUTE_BUTTON 2
-#define FIRE_BUTTON 3
-#define JUMP_BUTTON 4
-
 #define COMM_TOGGLE HAL_GPIO_TogglePin(COMM_GPIO_Port, COMM_Pin)
 
 #define KEY1_LED_ON  HAL_GPIO_WritePin(KEY1_LED_GPIO_Port, KEY1_LED_Pin, GPIO_PIN_RESET)
@@ -84,28 +78,7 @@ static void MX_TIM2_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-// GRAVITY
-const float gravity = 0.08;
-const float initVel = 2;
-const float dinoGroundPos = 58;
-const float parachuteGrag = 0.3;
-static float dinoVel = 0;
 
-// TICK
-const uint8_t fireTickLength = 20;
-const uint16_t softStartTickLength = 200;
-static uint32_t tick, plantTick, cloudTick, fireTick, bumpOrDepressionTick,
-		dirtTexTick;
-
-static bool isJumping, flipStatus;
-static uint16_t nextPlantTickDel, nextCloudTickDel, nextBumpOrDepressionTickDel,
-		nextDirtTexTickDel;
-
-static uint8_t groundLength;
-static float overallSpeed;
-
-static GameObj *ptr;
-static GameObj *ptr2;
 /* USER CODE END 0 */
 
 /**
@@ -144,346 +117,19 @@ int main(void) {
 
 	// ALL GPIO AND BUSES MUST BE INITED BEFORE CALL THIS FUNCTION
 	LCD_Init(&MemDisp, &hspi1, GPIOA, CS_Pin);
-
-	GameObj *dinoHeader = GenLoopBuf(1);
-	GameObj *fireHeader = GenLoopBuf(1);
-	GameObj *lavaHeader = GenLoopBuf(2);
-	GameObj *cloudHeader = GenLoopBuf(2);
-	GameObj *plantHeader = GenLoopBuf(4);
-	GameObj *dirtTexHeader = GenLoopBuf(12);
-	GameObj *bumpAndDepressionHeader = GenLoopBuf(4);
-
+	GenerateGameBuffers();
 	/* USER CODE END 2 */
 
 	/* Infinite loop */
 	/* USER CODE BEGIN WHILE */
 	while (1) {
 		/* USER CODE END WHILE */
-
 		/* USER CODE BEGIN 3 */
-		isJumping = 0;
-		flipStatus = 0;
+		GamePrep(&MemDisp);
 
-		nextPlantTickDel = 0;
-		nextCloudTickDel = 0;
-		nextDirtTexTickDel = 0;
-		nextBumpOrDepressionTickDel = 0;
-
-		plantTick = 0;
-		cloudTick = 0;
-		dirtTexTick = 0;
-		bumpOrDepressionTick = 0;
-
-		groundLength = 29;
-		tick = 0;
-		overallSpeed = 1;
-		dinoHeader->y = dinoGroundPos;
-
-		HeaderInit(dinoHeader, (uint8_t*) DinoAssets, 3, 22, 7);
-		HeaderInit(fireHeader, (uint8_t*) FireAssets, 9, 25, 2);
-		HeaderInit(cloudHeader, (uint8_t*) CloudAssets, 6, 14, 1);
-		HeaderInit(plantHeader, (uint8_t*) PlantAssets, 2, 22, 5);
-		HeaderInit(lavaHeader, (uint8_t*) LavaAssets, 9, 6, 4);
-		HeaderInit(dirtTexHeader, (uint8_t*) DirtTextureAssets, 1, 1, 6);
-		HeaderInit(bumpAndDepressionHeader, (uint8_t*) BumpAndDepressionAssets,
-				1, 2, 2);
-
-		dinoHeader = Append(dinoHeader, DinoNormalStand, 4, dinoGroundPos);
-		fireHeader = Append(fireHeader, CloudNormal, 24, 52);
-
-		LCD_Fill(flipStatus);
-		LCD_DrawLine(77, 0, 29, DRAWMODE_ADD, flipStatus);
-		LCD_DrawLine(dinoHeader->y + 19, dinoHeader->x + 3, 10, DRAWMODE_CULL,
-				flipStatus);
-		LCD_LoadObjs(dinoHeader, DRAWMODE_ADD, REPEATMODE_NONE, flipStatus);
-
-		LCD_Print("dev\tver.", 40, 85, DRAWMODE_ADD,
-		REPEATMODE_NONE, flipStatus);
-
-		LCD_UpdateFull(&MemDisp);
-		while (!GetButtonDown(JUMP_BUTTON))
-			;
-		dinoVel = initVel;
-		isJumping = 1;
-
-		/// THE TICK LOOP
 		while (1) {
-			// Day and night invertion
-			flipStatus = ((tick / 800) % 3 == 2) ? 1 : 0;
-			LCD_Fill(flipStatus);
-
-			if (GetButtonDown(JUMP_BUTTON) && !isJumping) {
-
-				dinoVel = initVel;
-				isJumping = 1;
-			}
-
-			if (isJumping) {
-
-				// Dino in air
-				if (dinoHeader->y <= dinoGroundPos) {
-
-					dinoHeader->y -= dinoVel;
-					if (GetButton(PARACHUTE_BUTTON) && dinoVel < 0) {
-
-						dinoVel -= gravity;
-						dinoVel += -dinoVel * parachuteGrag;
-
-					} else {
-
-						dinoVel -=
-								GetButton(JUMP_BUTTON) ?
-										(gravity * 0.6) : gravity;
-					}
-				}
-				// Landed
-				else {
-
-					isJumping = 0;
-					dinoHeader->y = dinoGroundPos;
-				}
-			} else {
-
-				dinoHeader->y = dinoGroundPos;
-			}
-
-			// Plant generation
-			if (tick - softStartTickLength - plantTick == nextPlantTickDel) {
-				plantHeader = Append(plantHeader, PlantNormal, 96, 59);
-				nextPlantTickDel = Random(tick, 80, 330);
-				plantTick = tick - softStartTickLength;
-			}
-			// Cloud generation
-			if (tick - softStartTickLength - cloudTick == nextCloudTickDel) {
-				cloudHeader = Append(cloudHeader, CloudNormal, 96,
-						Random(tick, 12, 20));
-				nextCloudTickDel = Random(tick, 1200, 2000);
-				cloudTick = tick - softStartTickLength;
-			}
-			// Dirt texture generation
-			if (tick - softStartTickLength - dirtTexTick
-					== nextDirtTexTickDel) {
-
-				dirtTexHeader = Append(dirtTexHeader, Random(tick, 2, 6), 96,
-						Random(tick, 83, 87));
-
-				nextDirtTexTickDel = Random(tick, 8, 30);
-				dirtTexTick = tick - softStartTickLength;
-			}
-			// Bumps and depressions generation
-			if (tick - softStartTickLength - bumpOrDepressionTick
-					== nextBumpOrDepressionTickDel) {
-				if (Random(tick, 0, 1)) {
-					bumpAndDepressionHeader = Append(bumpAndDepressionHeader,
-					Bump, 96, 75);
-				} else {
-					bumpAndDepressionHeader = Append(bumpAndDepressionHeader,
-					Depression, 96, 78);
-				}
-
-				nextBumpOrDepressionTickDel = Random(tick, 20, 150);
-				bumpOrDepressionTick = tick - softStartTickLength;
-			}
-
-			// Roll ground plane
-			if (groundLength < 96) {
-
-				LCD_DrawLine(77, 0, groundLength, DRAWMODE_ADD, flipStatus);
-				groundLength++;
-			} else {
-
-				// Still ground plane
-				LCD_DrawLine(77, 0, 96, DRAWMODE_ADD, flipStatus);
-			}
-
-			// Ground objs shift
-			plantHeader = ShiftX(plantHeader, -1 * overallSpeed);
-			lavaHeader = ShiftX(lavaHeader, -1 * overallSpeed);
-			dirtTexHeader = ShiftX(dirtTexHeader, -1 * overallSpeed);
-			bumpAndDepressionHeader = ShiftX(bumpAndDepressionHeader,
-					-1 * overallSpeed);
-
-			// Air objs shift
-			cloudHeader = ShiftX(cloudHeader, -0.1 * overallSpeed);
-
-			// Cull plant
-			ptr = plantHeader;
-			for (;;) {
-				if (ptr->full) {
-					for (uint8_t y = 71; y <= 77; y++) {
-						LCD_DrawLine(y, ptr->x + 2, 6, DRAWMODE_CULL,
-								flipStatus);
-					}
-				}
-				// If looped through all / next buffer is empty
-				if (!ptr->next->full || ptr->next == plantHeader)
-					break;
-
-				ptr = ptr->next;
-			}
-
-			// Cull bumps
-			ptr = bumpAndDepressionHeader;
-			for (;;) {
-				if (ptr->full) {
-
-					LCD_DrawLine(77, ptr->x + 1, 6, DRAWMODE_CULL, flipStatus);
-				}
-				// If looped through all / next buffer is empty
-				if (!ptr->next->full || ptr->next == bumpAndDepressionHeader)
-					break;
-
-				ptr = ptr->next;
-			}
-
-			// Cull dino
-			LCD_DrawLine(dinoHeader->y + 19, dinoHeader->x + 3, 10,
-			DRAWMODE_CULL, flipStatus);
-
-			// Render fire
-			if (!isJumping) {
-				if (GetButtonDown(FIRE_BUTTON)) {
-					fireTick = fireTickLength;
-					lavaHeader = Append(lavaHeader, 0, 57, 71);
-				}
-			}
-
-			if (fireTick > 0) {
-				fireTick--;
-
-				if (!isJumping) {
-					UpdateHeaderBmpIndex(fireHeader,
-							((fireTickLength - fireTick)
-									/ (int) (12 / overallSpeed)) % 2);
-					LCD_LoadObjs(fireHeader, DRAWMODE_ADD, REPEATMODE_NONE,
-							flipStatus);
-				}
-			}
-
-			UpdateAllBmpIndexs(lavaHeader,
-					(tick / (int) (16 / overallSpeed)) % 4);
-
-			LCD_LoadObjs(lavaHeader, DRAWMODE_ADD, REPEATMODE_NONE, flipStatus);
-
-			LCD_LoadObjs(plantHeader, DRAWMODE_ADD, REPEATMODE_NONE,
-					flipStatus);
-			LCD_LoadObjs(cloudHeader, DRAWMODE_ADD, REPEATMODE_NONE,
-					flipStatus);
-			LCD_LoadObjs(dirtTexHeader, DRAWMODE_ADD, REPEATMODE_NONE,
-					flipStatus);
-			LCD_LoadObjs(bumpAndDepressionHeader, DRAWMODE_ADD, REPEATMODE_NONE,
-					flipStatus);
-
-			// Loop through plants, check death
-			ptr = plantHeader;
-			for (;;) {
-				if (ptr->full && ptr->index == PlantNormal) {
-					if (IsOverlapping(dinoHeader->x + 3, dinoHeader->y,
-							dinoHeader->x + 23 - 7, dinoHeader->y + 21 - 4,
-							ptr->x, 59, ptr->x + 9, 59 + 21)) {
-						goto Dead;
-					}
-				}
-				// If looped through all / next buffer is empty
-				if (!ptr->next->full || ptr->next == plantHeader) {
-					break;
-				}
-				ptr = ptr->next;
-			}
-
-			// Loop through GroundFires and Plants, shrink plants
-			ptr = lavaHeader;
-			ptr2 = plantHeader;
-			for (;;) {
-				for (;;) {
-					if (ptr->full && ptr2->full) {
-						if (IsOverlapping(ptr->x, ptr->y, ptr->x + 72,
-								ptr->y + 25, ptr2->x, ptr2->y, ptr2->x + 9,
-								ptr2->y + 21)) {
-							if (tick % 10 == 0) {
-								ImgIndexRightShift(ptr2, 1);
-							}
-						}
-					}
-					// If looped through all / next buffer is empty
-					if (!ptr2->next->full || ptr2->next == plantHeader) {
-						break;
-					}
-					ptr2 = ptr2->next;
-				}
-				// If looped through all / next buffer is empty
-				if (!ptr->next->full || ptr->next == lavaHeader) {
-					break;
-				}
-				ptr = ptr->next;
-			}
-
-			// Jumping
-			if (isJumping) {
-				UpdateHeaderBmpIndex(dinoHeader, DinoNormalStand);
-				LCD_LoadObjs(dinoHeader, DRAWMODE_ADD, REPEATMODE_NONE,
-						flipStatus);
-			}
-			// Firing
-			else if (fireTick > 0) {
-				UpdateHeaderBmpIndex(dinoHeader,
-						(tick / (int) (12 / overallSpeed)) % 2 + 4);
-				LCD_LoadObjs(dinoHeader, DRAWMODE_ADD, REPEATMODE_NONE,
-						flipStatus);
-			}
-			// Running normally
-			else {
-				UpdateHeaderBmpIndex(dinoHeader,
-						(tick / (int) (12 / overallSpeed)) % 2 + 1);
-				LCD_LoadObjs(dinoHeader, DRAWMODE_ADD, REPEATMODE_NONE,
-						flipStatus);
-			}
-
-			tick++;
-			LCD_UpdateFull(&MemDisp);
-		}
-
-		// Dead handler (outer loop)
-		if (0) {
-			Dead: LCD_DrawLine(dinoHeader->y + 19, dinoHeader->x + 3, 10,
-			DRAWMODE_CULL, flipStatus);
-
-			UpdateHeaderBmpIndex(dinoHeader, DinoDead);
-			LCD_LoadObjs(dinoHeader, DRAWMODE_ADD, REPEATMODE_NONE, flipStatus);
-			LCD_UpdateFull(&MemDisp);
-
-			HAL_Delay(200);
-
-			// Flip screen
-			for (uint8_t i = 0; i < 2; i++) {
-				HAL_Delay(80);
-				LCD_Invert();
-				LCD_UpdateFull(&MemDisp);
-			}
-
-			// Redraw Dino
-			while (dinoHeader->y < dinoGroundPos) {
-				LCD_Fill(flipStatus);
-				LCD_DrawLine(77, 0, 96, DRAWMODE_ADD, flipStatus);
-				dinoHeader->y++;
-				LCD_DrawLine(dinoHeader->y + 19, dinoHeader->x + 3, 10,
-				DRAWMODE_CULL, flipStatus);
-				LCD_LoadObjs(dinoHeader, DRAWMODE_ADD, REPEATMODE_NONE,
-						flipStatus);
-				HAL_Delay(5);
-				LCD_UpdateFull(&MemDisp);
-
-			}
-
-			for (uint8_t l = 96; l > 28; l--) {
-				uint8_t delayTime = ceil((float) (96 - l) * 8 / 67);
-				LCD_DrawLine(77, l, 1, DRAWMODE_CULL, flipStatus);
-				LCD_UpdateLine(&MemDisp, 77);
-				HAL_Delay(delayTime);
-				if (GetButtonDown(JUMP_BUTTON))
-					break;
-			}
-
+			if (GameTick(&MemDisp) == DINO_IS_DEAD)
+				break;
 		}
 	}
 	/* USER CODE END 3 */
@@ -505,13 +151,14 @@ void SystemClock_Config(void) {
 	/** Initializes the RCC Oscillators according to the specified parameters
 	 * in the RCC_OscInitTypeDef structure.
 	 */
-	RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
-	RCC_OscInitStruct.HSEState = RCC_HSE_ON;
+	RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
+	RCC_OscInitStruct.HSIState = RCC_HSI_ON;
+	RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
 	RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-	RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
-	RCC_OscInitStruct.PLL.PLLM = 4;
-	RCC_OscInitStruct.PLL.PLLN = 96;
-	RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV6;
+	RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
+	RCC_OscInitStruct.PLL.PLLM = 8;
+	RCC_OscInitStruct.PLL.PLLN = 72;
+	RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
 	RCC_OscInitStruct.PLL.PLLQ = 4;
 	if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK) {
 		Error_Handler();
@@ -522,7 +169,7 @@ void SystemClock_Config(void) {
 	RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_SYSCLK
 			| RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2;
 	RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
-	RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
+	RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV2;
 	RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
 	RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
 
@@ -553,7 +200,7 @@ static void MX_SPI1_Init(void) {
 	hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
 	hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
 	hspi1.Init.NSS = SPI_NSS_SOFT;
-	hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_8;
+	hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_16;
 	hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
 	hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
 	hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
@@ -585,9 +232,9 @@ static void MX_TIM1_Init(void) {
 
 	/* USER CODE END TIM1_Init 1 */
 	htim1.Instance = TIM1;
-	htim1.Init.Prescaler = 32000 - 1;
+	htim1.Init.Prescaler = 36000 - 1;
 	htim1.Init.CounterMode = TIM_COUNTERMODE_UP;
-	htim1.Init.Period = 100 - 1;
+	htim1.Init.Period = 1000 - 1;
 	htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
 	htim1.Init.RepetitionCounter = 0;
 	htim1.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;

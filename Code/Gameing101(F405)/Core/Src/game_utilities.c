@@ -5,7 +5,7 @@
  *      Author: DannyHallo
  */
 
-#include "gamelogic.h"
+#include "game_utilities.h"
 
 bool IsOverlapping(short x1, short y1, short x2, short y2, short x3, short y3,
 		short x4, short y4) {

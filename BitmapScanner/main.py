@@ -7,7 +7,7 @@ import pyperclip
 
 def process_pic(file_name, invert, serial_num):
 
-    currentImage = Image.open("Imgs/" + file_name, 'r')
+    currentImage = Image.open("BitmapCollections/" + file_name, 'r')
     width, height = currentImage.size
     ceiled_width_in_byte = math.ceil(width / 8)
     image_size_in_byte = ceiled_width_in_byte * height
@@ -65,7 +65,7 @@ serialnum = 0
 invert = int(
     input("Invert?\n0 -> Don't Invert (default)\n1 -> Invert\n") or "0")
 
-for file in os.listdir("Imgs"):
+for file in os.listdir("BitmapCollections"):
     if file.endswith(".png"):
         total_pics += 1
 
@@ -73,7 +73,7 @@ if total_pics > 1:
     combined = int(
         input("\nMultiple files detected\n0 -> Separated (default)\n1 -> Combined\n") or "0")
 
-for file in os.listdir("Imgs"):
+for file in os.listdir("BitmapCollections"):
     if file.endswith(".png"):
         serialnum += 1
         print(file)

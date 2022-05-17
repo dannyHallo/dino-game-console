@@ -1,4 +1,4 @@
-Core/Src/LS013B4DN04.o: ../Core/Src/LS013B4DN04.c \
+Core/Src/dino_game.o: ../Core/Src/dino_game.c ../Core/Inc/dino_game.h \
  ../Core/Inc/LS013B4DN04.h ../Core/Inc/game_utilities.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal.h \
  ../Core/Inc/stm32f4xx_hal_conf.h \
@@ -28,7 +28,8 @@ Core/Src/LS013B4DN04.o: ../Core/Src/LS013B4DN04.c \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_spi.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim_ex.h \
- ../Core/Inc/pressstart.h
+ ../Core/Inc/image.h ../Core/Inc/buttons.h
+../Core/Inc/dino_game.h:
 ../Core/Inc/LS013B4DN04.h:
 ../Core/Inc/game_utilities.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal.h:
@@ -59,4 +60,5 @@ Core/Src/LS013B4DN04.o: ../Core/Src/LS013B4DN04.c \
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_spi.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim_ex.h:
-../Core/Inc/pressstart.h:
+../Core/Inc/image.h:
+../Core/Inc/buttons.h:

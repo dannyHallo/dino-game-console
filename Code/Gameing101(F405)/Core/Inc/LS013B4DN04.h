@@ -9,8 +9,8 @@
 #ifndef INC_LS013B4DN04_H_
 #define INC_LS013B4DN04_H_
 
+#include <game_utilities.h>
 #include "stm32f4xx_hal.h"
-#include "gamelogic.h"
 #include <stdbool.h>
 
 // This typedef holds the hardware parameters. For GPIO and SPI

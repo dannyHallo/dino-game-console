@@ -5,8 +5,8 @@
  *      Author: Administrator
  */
 
-#ifndef INC_GAMELOGIC_H_
-#define INC_GAMELOGIC_H_
+#ifndef INC_GAME_UTILITIES_H_
+#define INC_GAME_UTILITIES_H_
 
 #include <stdlib.h>
 #include <stdbool.h>
@@ -46,4 +46,4 @@ void ImgIndexRightShift(GameObj *header, bool disableWhenEnd);
 
 short Random(unsigned long seed, short lowerLim, short upperLim);
 
-#endif /* INC_GAMELOGIC_H_ */
+#endif /* INC_GAME_UTILITIES_H_ */

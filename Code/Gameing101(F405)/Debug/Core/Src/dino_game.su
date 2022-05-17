@@ -1,0 +1,6 @@
+../Core/Src/dino_game.c:69:6:GenerateGameBuffers	8	static
+../Core/Src/dino_game.c:79:6:GamePrep	24	static
+../Core/Src/dino_game.c:124:9:GameTick	40	static
+../Core/Src/dino_game.c:338:6:RenderDino	16	static
+../Core/Src/dino_game.c:390:6:DinoGetsStuck	40	static
+../Core/Src/dino_game.c:433:6:MeltPlants	40	static

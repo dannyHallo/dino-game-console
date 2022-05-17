@@ -1,6 +1,7 @@
 "./Core/Src/LS013B4DN04.o"
 "./Core/Src/buttons.o"
-"./Core/Src/gamelogic.o"
+"./Core/Src/dino_game.o"
+"./Core/Src/game_utilities.o"
 "./Core/Src/main.o"
 "./Core/Src/pressstart.o"
 "./Core/Src/stm32f4xx_hal_msp.o"

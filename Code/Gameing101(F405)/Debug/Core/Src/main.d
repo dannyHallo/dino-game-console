@@ -27,8 +27,8 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_spi.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim.h \
  ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim_ex.h \
- ../Core/Inc/LS013B4DN04.h ../Core/Inc/gamelogic.h ../Core/Inc/buttons.h \
- ../Core/Inc/image.h ../Core/Inc/gamelogic.h
+ ../Core/Inc/LS013B4DN04.h ../Core/Inc/game_utilities.h \
+ ../Core/Inc/buttons.h ../Core/Inc/dino_game.h ../Core/Inc/LS013B4DN04.h
 ../Core/Inc/main.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal.h:
 ../Core/Inc/stm32f4xx_hal_conf.h:
@@ -59,7 +59,7 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal_tim_ex.h:
 ../Core/Inc/LS013B4DN04.h:
-../Core/Inc/gamelogic.h:
+../Core/Inc/game_utilities.h:
 ../Core/Inc/buttons.h:
-../Core/Inc/image.h:
-../Core/Inc/gamelogic.h:
+../Core/Inc/dino_game.h:
+../Core/Inc/LS013B4DN04.h:
