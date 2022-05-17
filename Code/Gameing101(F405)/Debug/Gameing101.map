@@ -4786,26 +4786,26 @@ LOAD d:/st/stm32cubeide_1.9.0/stm32cubeide/plugins/com.st.stm32cube.ide.mcu.exte
  .debug_macro   0x0000000000017946      0x1cf ./Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_tim.o
  .debug_macro   0x0000000000017b15      0x1ce ./Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_tim_ex.o
 
-.debug_line     0x0000000000000000     0xf6f8
+.debug_line     0x0000000000000000     0xf6fe
  .debug_line    0x0000000000000000      0xe1f ./Core/Src/LS013B4DN04.o
  .debug_line    0x0000000000000e1f      0x78a ./Core/Src/buttons.o
- .debug_line    0x00000000000015a9      0xedb ./Core/Src/dino_game.o
- .debug_line    0x0000000000002484      0x79f ./Core/Src/game_utilities.o
- .debug_line    0x0000000000002c23      0xa21 ./Core/Src/main.o
- .debug_line    0x0000000000003644      0x571 ./Core/Src/pressstart.o
- .debug_line    0x0000000000003bb5      0x761 ./Core/Src/stm32f4xx_hal_msp.o
- .debug_line    0x0000000000004316      0x7a9 ./Core/Src/stm32f4xx_it.o
- .debug_line    0x0000000000004abf      0x7ef ./Core/Src/syscalls.o
- .debug_line    0x00000000000052ae      0x4e5 ./Core/Src/sysmem.o
- .debug_line    0x0000000000005793      0x738 ./Core/Src/system_stm32f4xx.o
- .debug_line    0x0000000000005ecb       0x88 ./Core/Startup/startup_stm32f401rctx.o
- .debug_line    0x0000000000005f53      0x99e ./Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal.o
- .debug_line    0x00000000000068f1      0xc4d ./Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_cortex.o
- .debug_line    0x000000000000753e      0xad6 ./Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_gpio.o
- .debug_line    0x0000000000008014      0xd1a ./Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_rcc.o
- .debug_line    0x0000000000008d2e     0x1c28 ./Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_spi.o
- .debug_line    0x000000000000a956     0x346c ./Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_tim.o
- .debug_line    0x000000000000ddc2     0x1936 ./Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_tim_ex.o
+ .debug_line    0x00000000000015a9      0xee1 ./Core/Src/dino_game.o
+ .debug_line    0x000000000000248a      0x79f ./Core/Src/game_utilities.o
+ .debug_line    0x0000000000002c29      0xa21 ./Core/Src/main.o
+ .debug_line    0x000000000000364a      0x571 ./Core/Src/pressstart.o
+ .debug_line    0x0000000000003bbb      0x761 ./Core/Src/stm32f4xx_hal_msp.o
+ .debug_line    0x000000000000431c      0x7a9 ./Core/Src/stm32f4xx_it.o
+ .debug_line    0x0000000000004ac5      0x7ef ./Core/Src/syscalls.o
+ .debug_line    0x00000000000052b4      0x4e5 ./Core/Src/sysmem.o
+ .debug_line    0x0000000000005799      0x738 ./Core/Src/system_stm32f4xx.o
+ .debug_line    0x0000000000005ed1       0x88 ./Core/Startup/startup_stm32f401rctx.o
+ .debug_line    0x0000000000005f59      0x99e ./Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal.o
+ .debug_line    0x00000000000068f7      0xc4d ./Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_cortex.o
+ .debug_line    0x0000000000007544      0xad6 ./Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_gpio.o
+ .debug_line    0x000000000000801a      0xd1a ./Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_rcc.o
+ .debug_line    0x0000000000008d34     0x1c28 ./Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_spi.o
+ .debug_line    0x000000000000a95c     0x346c ./Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_tim.o
+ .debug_line    0x000000000000ddc8     0x1936 ./Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_tim_ex.o
 
 .debug_str      0x0000000000000000    0x8f545
  .debug_str     0x0000000000000000    0x890b0 ./Core/Src/LS013B4DN04.o

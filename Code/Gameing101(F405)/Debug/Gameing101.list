@@ -37,13 +37,13 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   CONTENTS, READONLY, DEBUGGING, OCTETS
  16 .debug_macro  00017ce3  00000000  00000000  00031f40  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 17 .debug_line   0000f6f8  00000000  00000000  00049c23  2**0
+ 17 .debug_line   0000f6fe  00000000  00000000  00049c23  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 18 .debug_str    0008f545  00000000  00000000  0005931b  2**0
+ 18 .debug_str    0008f545  00000000  00000000  00059321  2**0
                   CONTENTS, READONLY, DEBUGGING, OCTETS
- 19 .comment      00000050  00000000  00000000  000e8860  2**0
+ 19 .comment      00000050  00000000  00000000  000e8866  2**0
                   CONTENTS, READONLY
- 20 .debug_frame  0000448c  00000000  00000000  000e88b0  2**2
+ 20 .debug_frame  0000448c  00000000  00000000  000e88b8  2**2
                   CONTENTS, READONLY, DEBUGGING, OCTETS
 
 Disassembly of section .text:
@@ -3266,7 +3266,7 @@ uint8_t GameTick(LS013B4DN04 *display) {
  8001e0e:	781b      	ldrb	r3, [r3, #0]
  8001e10:	3b03      	subs	r3, #3
  8001e12:	2b02      	cmp	r3, #2
- 8001e14:	d876      	bhi.n	8001f04 <GameTick+0x134>
+ 8001e14:	d877      	bhi.n	8001f06 <GameTick+0x136>
 	case JUMPING:
 	case GLIDING:
 	case DODGING:
@@ -3278,7 +3278,7 @@ uint8_t GameTick(LS013B4DN04 *display) {
  8001e1e:	ed9f 7a5f 	vldr	s14, [pc, #380]	; 8001f9c <GameTick+0x1cc>
  8001e22:	eef4 7ac7 	vcmpe.f32	s15, s14
  8001e26:	eef1 fa10 	vmrs	APSR_nzcv, fpscr
- 8001e2a:	d86b      	bhi.n	8001f04 <GameTick+0x134>
+ 8001e2a:	d86c      	bhi.n	8001f06 <GameTick+0x136>
 
 			dinoHeader->y -= dinoVel;
  8001e2c:	4b5a      	ldr	r3, [pc, #360]	; (8001f98 <GameTick+0x1c8>)
@@ -3295,12 +3295,12 @@ uint8_t GameTick(LS013B4DN04 *display) {
  8001e48:	f7ff fe28 	bl	8001a9c <GetButton>
  8001e4c:	4603      	mov	r3, r0
  8001e4e:	2b00      	cmp	r3, #0
- 8001e50:	d025      	beq.n	8001e9e <GameTick+0xce>
+ 8001e50:	d026      	beq.n	8001ea0 <GameTick+0xd0>
  8001e52:	4b53      	ldr	r3, [pc, #332]	; (8001fa0 <GameTick+0x1d0>)
  8001e54:	edd3 7a00 	vldr	s15, [r3]
  8001e58:	eef5 7ac0 	vcmpe.f32	s15, #0.0
  8001e5c:	eef1 fa10 	vmrs	APSR_nzcv, fpscr
- 8001e60:	d51d      	bpl.n	8001e9e <GameTick+0xce>
+ 8001e60:	d51e      	bpl.n	8001ea0 <GameTick+0xd0>
 				dinoState = GLIDING;
  8001e62:	4b4c      	ldr	r3, [pc, #304]	; (8001f94 <GameTick+0x1c4>)
  8001e64:	2204      	movs	r2, #4
@@ -3323,140 +3323,140 @@ uint8_t GameTick(LS013B4DN04 *display) {
  8001e94:	ee77 7a27 	vadd.f32	s15, s14, s15
  8001e98:	4b41      	ldr	r3, [pc, #260]	; (8001fa0 <GameTick+0x1d0>)
  8001e9a:	edc3 7a00 	vstr	s15, [r3]
+				dinoState = JUMPING;
+				dinoVel -=
+						GetButton(JUMP_BUTTON) ?
+								(gravity * longPressGravityMul) : gravity;
 			}
-			if (GetButton(DODGE_BUTTON)) {
- 8001e9e:	2002      	movs	r0, #2
- 8001ea0:	f7ff fdfc 	bl	8001a9c <GetButton>
- 8001ea4:	4603      	mov	r3, r0
- 8001ea6:	2b00      	cmp	r3, #0
- 8001ea8:	d011      	beq.n	8001ece <GameTick+0xfe>
+			break;
+ 8001e9e:	e091      	b.n	8001fc4 <GameTick+0x1f4>
+			} else if (GetButton(DODGE_BUTTON)) {
+ 8001ea0:	2002      	movs	r0, #2
+ 8001ea2:	f7ff fdfb 	bl	8001a9c <GetButton>
+ 8001ea6:	4603      	mov	r3, r0
+ 8001ea8:	2b00      	cmp	r3, #0
+ 8001eaa:	d011      	beq.n	8001ed0 <GameTick+0x100>
 				dinoState = DODGING;
- 8001eaa:	4b3a      	ldr	r3, [pc, #232]	; (8001f94 <GameTick+0x1c4>)
- 8001eac:	2205      	movs	r2, #5
- 8001eae:	701a      	strb	r2, [r3, #0]
+ 8001eac:	4b39      	ldr	r3, [pc, #228]	; (8001f94 <GameTick+0x1c4>)
+ 8001eae:	2205      	movs	r2, #5
+ 8001eb0:	701a      	strb	r2, [r3, #0]
 				dinoVel -= gravity * dodgeGravityMul;
- 8001eb0:	4b3b      	ldr	r3, [pc, #236]	; (8001fa0 <GameTick+0x1d0>)
- 8001eb2:	ed93 7a00 	vldr	s14, [r3]
- 8001eb6:	eddf 6a3b 	vldr	s13, [pc, #236]	; 8001fa4 <GameTick+0x1d4>
- 8001eba:	eef0 7a00 	vmov.f32	s15, #0	; 0x40000000  2.0
- 8001ebe:	ee66 7aa7 	vmul.f32	s15, s13, s15
- 8001ec2:	ee77 7a67 	vsub.f32	s15, s14, s15
- 8001ec6:	4b36      	ldr	r3, [pc, #216]	; (8001fa0 <GameTick+0x1d0>)
- 8001ec8:	edc3 7a00 	vstr	s15, [r3]
-				dinoState = JUMPING;
-				dinoVel -=
-						GetButton(JUMP_BUTTON) ?
-								(gravity * longPressGravityMul) : gravity;
-			}
+ 8001eb2:	4b3b      	ldr	r3, [pc, #236]	; (8001fa0 <GameTick+0x1d0>)
+ 8001eb4:	ed93 7a00 	vldr	s14, [r3]
+ 8001eb8:	eddf 6a3a 	vldr	s13, [pc, #232]	; 8001fa4 <GameTick+0x1d4>
+ 8001ebc:	eef0 7a00 	vmov.f32	s15, #0	; 0x40000000  2.0
+ 8001ec0:	ee66 7aa7 	vmul.f32	s15, s13, s15
+ 8001ec4:	ee77 7a67 	vsub.f32	s15, s14, s15
+ 8001ec8:	4b35      	ldr	r3, [pc, #212]	; (8001fa0 <GameTick+0x1d0>)
+ 8001eca:	edc3 7a00 	vstr	s15, [r3]
 			break;
- 8001ecc:	e07a      	b.n	8001fc4 <GameTick+0x1f4>
+ 8001ece:	e079      	b.n	8001fc4 <GameTick+0x1f4>
 				dinoState = JUMPING;
- 8001ece:	4b31      	ldr	r3, [pc, #196]	; (8001f94 <GameTick+0x1c4>)
- 8001ed0:	2203      	movs	r2, #3
- 8001ed2:	701a      	strb	r2, [r3, #0]
+ 8001ed0:	4b30      	ldr	r3, [pc, #192]	; (8001f94 <GameTick+0x1c4>)
+ 8001ed2:	2203      	movs	r2, #3
+ 8001ed4:	701a      	strb	r2, [r3, #0]
 						GetButton(JUMP_BUTTON) ?
- 8001ed4:	2004      	movs	r0, #4
- 8001ed6:	f7ff fde1 	bl	8001a9c <GetButton>
- 8001eda:	4603      	mov	r3, r0
+ 8001ed6:	2004      	movs	r0, #4
+ 8001ed8:	f7ff fde0 	bl	8001a9c <GetButton>
+ 8001edc:	4603      	mov	r3, r0
 								(gravity * longPressGravityMul) : gravity;
- 8001edc:	2b00      	cmp	r3, #0
- 8001ede:	d006      	beq.n	8001eee <GameTick+0x11e>
- 8001ee0:	ed9f 7a30 	vldr	s14, [pc, #192]	; 8001fa4 <GameTick+0x1d4>
- 8001ee4:	eddf 7a31 	vldr	s15, [pc, #196]	; 8001fac <GameTick+0x1dc>
- 8001ee8:	ee67 7a27 	vmul.f32	s15, s14, s15
- 8001eec:	e001      	b.n	8001ef2 <GameTick+0x122>
- 8001eee:	eddf 7a2d 	vldr	s15, [pc, #180]	; 8001fa4 <GameTick+0x1d4>
+ 8001ede:	2b00      	cmp	r3, #0
+ 8001ee0:	d006      	beq.n	8001ef0 <GameTick+0x120>
+ 8001ee2:	ed9f 7a30 	vldr	s14, [pc, #192]	; 8001fa4 <GameTick+0x1d4>
+ 8001ee6:	eddf 7a31 	vldr	s15, [pc, #196]	; 8001fac <GameTick+0x1dc>
+ 8001eea:	ee67 7a27 	vmul.f32	s15, s14, s15
+ 8001eee:	e001      	b.n	8001ef4 <GameTick+0x124>
+ 8001ef0:	eddf 7a2c 	vldr	s15, [pc, #176]	; 8001fa4 <GameTick+0x1d4>
 				dinoVel -=
- 8001ef2:	4b2b      	ldr	r3, [pc, #172]	; (8001fa0 <GameTick+0x1d0>)
- 8001ef4:	ed93 7a00 	vldr	s14, [r3]
- 8001ef8:	ee77 7a67 	vsub.f32	s15, s14, s15
- 8001efc:	4b28      	ldr	r3, [pc, #160]	; (8001fa0 <GameTick+0x1d0>)
- 8001efe:	edc3 7a00 	vstr	s15, [r3]
+ 8001ef4:	4b2a      	ldr	r3, [pc, #168]	; (8001fa0 <GameTick+0x1d0>)
+ 8001ef6:	ed93 7a00 	vldr	s14, [r3]
+ 8001efa:	ee77 7a67 	vsub.f32	s15, s14, s15
+ 8001efe:	4b28      	ldr	r3, [pc, #160]	; (8001fa0 <GameTick+0x1d0>)
+ 8001f00:	edc3 7a00 	vstr	s15, [r3]
 			break;
- 8001f02:	e05f      	b.n	8001fc4 <GameTick+0x1f4>
+ 8001f04:	e05e      	b.n	8001fc4 <GameTick+0x1f4>
 		}
 		// First land continue
 
 	default:
 		dinoHeader->y = dinoGroundPos;
- 8001f04:	4b24      	ldr	r3, [pc, #144]	; (8001f98 <GameTick+0x1c8>)
- 8001f06:	681b      	ldr	r3, [r3, #0]
- 8001f08:	4a29      	ldr	r2, [pc, #164]	; (8001fb0 <GameTick+0x1e0>)
- 8001f0a:	609a      	str	r2, [r3, #8]
+ 8001f06:	4b24      	ldr	r3, [pc, #144]	; (8001f98 <GameTick+0x1c8>)
+ 8001f08:	681b      	ldr	r3, [r3, #0]
+ 8001f0a:	4a29      	ldr	r2, [pc, #164]	; (8001fb0 <GameTick+0x1e0>)
+ 8001f0c:	609a      	str	r2, [r3, #8]
 		dinoVel = 0;
- 8001f0c:	4b24      	ldr	r3, [pc, #144]	; (8001fa0 <GameTick+0x1d0>)
- 8001f0e:	f04f 0200 	mov.w	r2, #0
- 8001f12:	601a      	str	r2, [r3, #0]
+ 8001f0e:	4b24      	ldr	r3, [pc, #144]	; (8001fa0 <GameTick+0x1d0>)
+ 8001f10:	f04f 0200 	mov.w	r2, #0
+ 8001f14:	601a      	str	r2, [r3, #0]
 
 		if (GetButtonDown(JUMP_BUTTON)) {
- 8001f14:	2004      	movs	r0, #4
- 8001f16:	f7ff fdd5 	bl	8001ac4 <GetButtonDown>
- 8001f1a:	4603      	mov	r3, r0
- 8001f1c:	2b00      	cmp	r3, #0
- 8001f1e:	d007      	beq.n	8001f30 <GameTick+0x160>
+ 8001f16:	2004      	movs	r0, #4
+ 8001f18:	f7ff fdd4 	bl	8001ac4 <GetButtonDown>
+ 8001f1c:	4603      	mov	r3, r0
+ 8001f1e:	2b00      	cmp	r3, #0
+ 8001f20:	d007      	beq.n	8001f32 <GameTick+0x162>
 			dinoVel = initVel;
- 8001f20:	f04f 4280 	mov.w	r2, #1073741824	; 0x40000000
- 8001f24:	4b1e      	ldr	r3, [pc, #120]	; (8001fa0 <GameTick+0x1d0>)
- 8001f26:	601a      	str	r2, [r3, #0]
+ 8001f22:	f04f 4280 	mov.w	r2, #1073741824	; 0x40000000
+ 8001f26:	4b1e      	ldr	r3, [pc, #120]	; (8001fa0 <GameTick+0x1d0>)
+ 8001f28:	601a      	str	r2, [r3, #0]
 			dinoState = JUMPING;
- 8001f28:	4b1a      	ldr	r3, [pc, #104]	; (8001f94 <GameTick+0x1c4>)
- 8001f2a:	2203      	movs	r2, #3
- 8001f2c:	701a      	strb	r2, [r3, #0]
+ 8001f2a:	4b1a      	ldr	r3, [pc, #104]	; (8001f94 <GameTick+0x1c4>)
+ 8001f2c:	2203      	movs	r2, #3
+ 8001f2e:	701a      	strb	r2, [r3, #0]
 			dinoState = FIRING;
 		} else {
 			dinoState = RUNNING;
 		}
 
 		break;
- 8001f2e:	e048      	b.n	8001fc2 <GameTick+0x1f2>
+ 8001f30:	e047      	b.n	8001fc2 <GameTick+0x1f2>
 		} else if (GetButton(DODGE_BUTTON)) {
- 8001f30:	2002      	movs	r0, #2
- 8001f32:	f7ff fdb3 	bl	8001a9c <GetButton>
- 8001f36:	4603      	mov	r3, r0
- 8001f38:	2b00      	cmp	r3, #0
- 8001f3a:	d003      	beq.n	8001f44 <GameTick+0x174>
+ 8001f32:	2002      	movs	r0, #2
+ 8001f34:	f7ff fdb2 	bl	8001a9c <GetButton>
+ 8001f38:	4603      	mov	r3, r0
+ 8001f3a:	2b00      	cmp	r3, #0
+ 8001f3c:	d003      	beq.n	8001f46 <GameTick+0x176>
 			dinoState = DODGING;
- 8001f3c:	4b15      	ldr	r3, [pc, #84]	; (8001f94 <GameTick+0x1c4>)
- 8001f3e:	2205      	movs	r2, #5
- 8001f40:	701a      	strb	r2, [r3, #0]
+ 8001f3e:	4b15      	ldr	r3, [pc, #84]	; (8001f94 <GameTick+0x1c4>)
+ 8001f40:	2205      	movs	r2, #5
+ 8001f42:	701a      	strb	r2, [r3, #0]
 		break;
- 8001f42:	e03e      	b.n	8001fc2 <GameTick+0x1f2>
+ 8001f44:	e03d      	b.n	8001fc2 <GameTick+0x1f2>
 		} else if (GetButtonDown(FIRE_BUTTON)) {
- 8001f44:	2003      	movs	r0, #3
- 8001f46:	f7ff fdbd 	bl	8001ac4 <GetButtonDown>
- 8001f4a:	4603      	mov	r3, r0
- 8001f4c:	2b00      	cmp	r3, #0
- 8001f4e:	d00e      	beq.n	8001f6e <GameTick+0x19e>
+ 8001f46:	2003      	movs	r0, #3
+ 8001f48:	f7ff fdbc 	bl	8001ac4 <GetButtonDown>
+ 8001f4c:	4603      	mov	r3, r0
+ 8001f4e:	2b00      	cmp	r3, #0
+ 8001f50:	d00e      	beq.n	8001f70 <GameTick+0x1a0>
 			fireTick = fireTickLength;
- 8001f50:	2314      	movs	r3, #20
- 8001f52:	461a      	mov	r2, r3
- 8001f54:	4b17      	ldr	r3, [pc, #92]	; (8001fb4 <GameTick+0x1e4>)
- 8001f56:	601a      	str	r2, [r3, #0]
+ 8001f52:	2314      	movs	r3, #20
+ 8001f54:	461a      	mov	r2, r3
+ 8001f56:	4b17      	ldr	r3, [pc, #92]	; (8001fb4 <GameTick+0x1e4>)
+ 8001f58:	601a      	str	r2, [r3, #0]
 			lavaHeader = Append(lavaHeader, 0, 57, 71);
- 8001f58:	4b17      	ldr	r3, [pc, #92]	; (8001fb8 <GameTick+0x1e8>)
- 8001f5a:	6818      	ldr	r0, [r3, #0]
- 8001f5c:	2347      	movs	r3, #71	; 0x47
- 8001f5e:	2239      	movs	r2, #57	; 0x39
- 8001f60:	2100      	movs	r1, #0
- 8001f62:	f000 ff02 	bl	8002d6a <Append>
- 8001f66:	4603      	mov	r3, r0
- 8001f68:	4a13      	ldr	r2, [pc, #76]	; (8001fb8 <GameTick+0x1e8>)
- 8001f6a:	6013      	str	r3, [r2, #0]
+ 8001f5a:	4b17      	ldr	r3, [pc, #92]	; (8001fb8 <GameTick+0x1e8>)
+ 8001f5c:	6818      	ldr	r0, [r3, #0]
+ 8001f5e:	2347      	movs	r3, #71	; 0x47
+ 8001f60:	2239      	movs	r2, #57	; 0x39
+ 8001f62:	2100      	movs	r1, #0
+ 8001f64:	f000 ff01 	bl	8002d6a <Append>
+ 8001f68:	4603      	mov	r3, r0
+ 8001f6a:	4a13      	ldr	r2, [pc, #76]	; (8001fb8 <GameTick+0x1e8>)
+ 8001f6c:	6013      	str	r3, [r2, #0]
 		break;
- 8001f6c:	e029      	b.n	8001fc2 <GameTick+0x1f2>
+ 8001f6e:	e028      	b.n	8001fc2 <GameTick+0x1f2>
 		} else if (GetButton(FIRE_BUTTON)) {
- 8001f6e:	2003      	movs	r0, #3
- 8001f70:	f7ff fd94 	bl	8001a9c <GetButton>
- 8001f74:	4603      	mov	r3, r0
- 8001f76:	2b00      	cmp	r3, #0
- 8001f78:	d020      	beq.n	8001fbc <GameTick+0x1ec>
+ 8001f70:	2003      	movs	r0, #3
+ 8001f72:	f7ff fd93 	bl	8001a9c <GetButton>
+ 8001f76:	4603      	mov	r3, r0
+ 8001f78:	2b00      	cmp	r3, #0
+ 8001f7a:	d01f      	beq.n	8001fbc <GameTick+0x1ec>
 			dinoState = FIRING;
- 8001f7a:	4b06      	ldr	r3, [pc, #24]	; (8001f94 <GameTick+0x1c4>)
- 8001f7c:	2202      	movs	r2, #2
- 8001f7e:	701a      	strb	r2, [r3, #0]
+ 8001f7c:	4b05      	ldr	r3, [pc, #20]	; (8001f94 <GameTick+0x1c4>)
+ 8001f7e:	2202      	movs	r2, #2
+ 8001f80:	701a      	strb	r2, [r3, #0]
 		break;
- 8001f80:	e01f      	b.n	8001fc2 <GameTick+0x1f2>
- 8001f82:	bf00      	nop
+ 8001f82:	e01e      	b.n	8001fc2 <GameTick+0x1f2>
  8001f84:	200000b8 	.word	0x200000b8
  8001f88:	51eb851f 	.word	0x51eb851f
  8001f8c:	aaaaaaab 	.word	0xaaaaaaab
@@ -4130,7 +4130,7 @@ uint8_t GameTick(LS013B4DN04 *display) {
  80024ba:	f7fe fdeb 	bl	8001094 <LCD_UpdateFull>
 	return DINO_IS_ALIVE;
  80024be:	2300      	movs	r3, #0
- 80024c0:	e0f2      	b.n	80026a8 <GameTick+0x8d8>
+ 80024c0:	e0ef      	b.n	80026a2 <GameTick+0x8d2>
 		goto Dead;
  80024c2:	bf00      	nop
 
@@ -4200,7 +4200,7 @@ uint8_t GameTick(LS013B4DN04 *display) {
 
 	// Redraw Dino
 	while (dinoHeader->y < dinoGroundPos) {
- 8002544:	e061      	b.n	800260a <GameTick+0x83a>
+ 8002544:	e05e      	b.n	8002604 <GameTick+0x834>
  8002546:	bf00      	nop
  8002548:	200000e0 	.word	0x200000e0
  800254c:	200000d0 	.word	0x200000d0
@@ -4216,12 +4216,12 @@ uint8_t GameTick(LS013B4DN04 *display) {
  8002574:	200000fc 	.word	0x200000fc
  8002578:	200000da 	.word	0x200000da
 		LCD_Fill(flipStatus);
- 800257c:	4b4c      	ldr	r3, [pc, #304]	; (80026b0 <GameTick+0x8e0>)
+ 800257c:	4b4b      	ldr	r3, [pc, #300]	; (80026ac <GameTick+0x8dc>)
  800257e:	781b      	ldrb	r3, [r3, #0]
  8002580:	4618      	mov	r0, r3
  8002582:	f7ff f97b 	bl	800187c <LCD_Fill>
 		LCD_DrawLine(77, 0, 96, DRAWMODE_ADD, flipStatus);
- 8002586:	4b4a      	ldr	r3, [pc, #296]	; (80026b0 <GameTick+0x8e0>)
+ 8002586:	4b49      	ldr	r3, [pc, #292]	; (80026ac <GameTick+0x8dc>)
  8002588:	781b      	ldrb	r3, [r3, #0]
  800258a:	9300      	str	r3, [sp, #0]
  800258c:	2300      	movs	r3, #0
@@ -4230,14 +4230,14 @@ uint8_t GameTick(LS013B4DN04 *display) {
  8002592:	204d      	movs	r0, #77	; 0x4d
  8002594:	f7ff f84c 	bl	8001630 <LCD_DrawLine>
 		dinoHeader->y++;
- 8002598:	4b46      	ldr	r3, [pc, #280]	; (80026b4 <GameTick+0x8e4>)
+ 8002598:	4b45      	ldr	r3, [pc, #276]	; (80026b0 <GameTick+0x8e0>)
  800259a:	681b      	ldr	r3, [r3, #0]
  800259c:	edd3 7a02 	vldr	s15, [r3, #8]
  80025a0:	eeb7 7a00 	vmov.f32	s14, #112	; 0x3f800000  1.0
  80025a4:	ee77 7a87 	vadd.f32	s15, s15, s14
  80025a8:	edc3 7a02 	vstr	s15, [r3, #8]
 		LCD_DrawLine(dinoHeader->y + 19, dinoHeader->x + 3, 10,
- 80025ac:	4b41      	ldr	r3, [pc, #260]	; (80026b4 <GameTick+0x8e4>)
+ 80025ac:	4b40      	ldr	r3, [pc, #256]	; (80026b0 <GameTick+0x8e0>)
  80025ae:	681b      	ldr	r3, [r3, #0]
  80025b0:	edd3 7a02 	vldr	s15, [r3, #8]
  80025b4:	eeb3 7a03 	vmov.f32	s14, #51	; 0x41980000  19.0
@@ -4246,13 +4246,13 @@ uint8_t GameTick(LS013B4DN04 *display) {
  80025c0:	edc7 7a00 	vstr	s15, [r7]
  80025c4:	783b      	ldrb	r3, [r7, #0]
  80025c6:	b2d8      	uxtb	r0, r3
- 80025c8:	4b3a      	ldr	r3, [pc, #232]	; (80026b4 <GameTick+0x8e4>)
+ 80025c8:	4b39      	ldr	r3, [pc, #228]	; (80026b0 <GameTick+0x8e0>)
  80025ca:	681b      	ldr	r3, [r3, #0]
  80025cc:	edd3 7a01 	vldr	s15, [r3, #4]
  80025d0:	eeb0 7a08 	vmov.f32	s14, #8	; 0x40400000  3.0
  80025d4:	ee77 7a87 	vadd.f32	s15, s15, s14
  80025d8:	eefd 7ae7 	vcvt.s32.f32	s15, s15
- 80025dc:	4b34      	ldr	r3, [pc, #208]	; (80026b0 <GameTick+0x8e0>)
+ 80025dc:	4b33      	ldr	r3, [pc, #204]	; (80026ac <GameTick+0x8dc>)
  80025de:	781b      	ldrb	r3, [r3, #0]
  80025e0:	9300      	str	r3, [sp, #0]
  80025e2:	2301      	movs	r3, #1
@@ -4260,99 +4260,97 @@ uint8_t GameTick(LS013B4DN04 *display) {
  80025e6:	ee17 1a90 	vmov	r1, s15
  80025ea:	f7ff f821 	bl	8001630 <LCD_DrawLine>
 		DRAWMODE_CULL, flipStatus);
-		LCD_LoadObjs(dinoHeader, DRAWMODE_ADD, REPEATMODE_NONE, flipStatus);
- 80025ee:	4b31      	ldr	r3, [pc, #196]	; (80026b4 <GameTick+0x8e4>)
- 80025f0:	6818      	ldr	r0, [r3, #0]
- 80025f2:	4b2f      	ldr	r3, [pc, #188]	; (80026b0 <GameTick+0x8e0>)
- 80025f4:	781b      	ldrb	r3, [r3, #0]
- 80025f6:	2200      	movs	r2, #0
- 80025f8:	2100      	movs	r1, #0
- 80025fa:	f7fe fe19 	bl	8001230 <LCD_LoadObjs>
-		HAL_Delay(5);
- 80025fe:	2005      	movs	r0, #5
- 8002600:	f001 fa26 	bl	8003a50 <HAL_Delay>
+		RenderDino(dinoHeader, dinoState, 1);
+ 80025ee:	4b30      	ldr	r3, [pc, #192]	; (80026b0 <GameTick+0x8e0>)
+ 80025f0:	681b      	ldr	r3, [r3, #0]
+ 80025f2:	4a30      	ldr	r2, [pc, #192]	; (80026b4 <GameTick+0x8e4>)
+ 80025f4:	7811      	ldrb	r1, [r2, #0]
+ 80025f6:	2201      	movs	r2, #1
+ 80025f8:	4618      	mov	r0, r3
+ 80025fa:	f000 f861 	bl	80026c0 <RenderDino>
 		LCD_UpdateFull(display);
- 8002604:	6878      	ldr	r0, [r7, #4]
- 8002606:	f7fe fd45 	bl	8001094 <LCD_UpdateFull>
+ 80025fe:	6878      	ldr	r0, [r7, #4]
+ 8002600:	f7fe fd48 	bl	8001094 <LCD_UpdateFull>
 	while (dinoHeader->y < dinoGroundPos) {
- 800260a:	4b2a      	ldr	r3, [pc, #168]	; (80026b4 <GameTick+0x8e4>)
- 800260c:	681b      	ldr	r3, [r3, #0]
- 800260e:	edd3 7a02 	vldr	s15, [r3, #8]
- 8002612:	ed9f 7a29 	vldr	s14, [pc, #164]	; 80026b8 <GameTick+0x8e8>
- 8002616:	eef4 7ac7 	vcmpe.f32	s15, s14
- 800261a:	eef1 fa10 	vmrs	APSR_nzcv, fpscr
- 800261e:	d4ad      	bmi.n	800257c <GameTick+0x7ac>
-
+ 8002604:	4b2a      	ldr	r3, [pc, #168]	; (80026b0 <GameTick+0x8e0>)
+ 8002606:	681b      	ldr	r3, [r3, #0]
+ 8002608:	edd3 7a02 	vldr	s15, [r3, #8]
+ 800260c:	ed9f 7a2a 	vldr	s14, [pc, #168]	; 80026b8 <GameTick+0x8e8>
+ 8002610:	eef4 7ac7 	vcmpe.f32	s15, s14
+ 8002614:	eef1 fa10 	vmrs	APSR_nzcv, fpscr
+ 8002618:	d4b0      	bmi.n	800257c <GameTick+0x7ac>
 	}
 
 	for (uint8_t l = 96; l > 28; l--) {
- 8002620:	2360      	movs	r3, #96	; 0x60
- 8002622:	737b      	strb	r3, [r7, #13]
- 8002624:	e03a      	b.n	800269c <GameTick+0x8cc>
+ 800261a:	2360      	movs	r3, #96	; 0x60
+ 800261c:	737b      	strb	r3, [r7, #13]
+ 800261e:	e03a      	b.n	8002696 <GameTick+0x8c6>
 		uint8_t delayTime = ceil((float) (96 - l) * 8 / 67);
- 8002626:	7b7b      	ldrb	r3, [r7, #13]
- 8002628:	f1c3 0360 	rsb	r3, r3, #96	; 0x60
- 800262c:	ee07 3a90 	vmov	s15, r3
- 8002630:	eef8 7ae7 	vcvt.f32.s32	s15, s15
- 8002634:	eeb2 7a00 	vmov.f32	s14, #32	; 0x41000000  8.0
- 8002638:	ee67 7a87 	vmul.f32	s15, s15, s14
- 800263c:	ed9f 7a1f 	vldr	s14, [pc, #124]	; 80026bc <GameTick+0x8ec>
- 8002640:	eec7 6a87 	vdiv.f32	s13, s15, s14
- 8002644:	ee16 0a90 	vmov	r0, s13
- 8002648:	f7fd ff86 	bl	8000558 <__aeabi_f2d>
- 800264c:	4602      	mov	r2, r0
- 800264e:	460b      	mov	r3, r1
- 8002650:	ec43 2b10 	vmov	d0, r2, r3
- 8002654:	f004 f8d4 	bl	8006800 <ceil>
- 8002658:	ec53 2b10 	vmov	r2, r3, d0
- 800265c:	4610      	mov	r0, r2
- 800265e:	4619      	mov	r1, r3
- 8002660:	f7fe fa94 	bl	8000b8c <__aeabi_d2uiz>
- 8002664:	4603      	mov	r3, r0
- 8002666:	733b      	strb	r3, [r7, #12]
+ 8002620:	7b7b      	ldrb	r3, [r7, #13]
+ 8002622:	f1c3 0360 	rsb	r3, r3, #96	; 0x60
+ 8002626:	ee07 3a90 	vmov	s15, r3
+ 800262a:	eef8 7ae7 	vcvt.f32.s32	s15, s15
+ 800262e:	eeb2 7a00 	vmov.f32	s14, #32	; 0x41000000  8.0
+ 8002632:	ee67 7a87 	vmul.f32	s15, s15, s14
+ 8002636:	ed9f 7a21 	vldr	s14, [pc, #132]	; 80026bc <GameTick+0x8ec>
+ 800263a:	eec7 6a87 	vdiv.f32	s13, s15, s14
+ 800263e:	ee16 0a90 	vmov	r0, s13
+ 8002642:	f7fd ff89 	bl	8000558 <__aeabi_f2d>
+ 8002646:	4602      	mov	r2, r0
+ 8002648:	460b      	mov	r3, r1
+ 800264a:	ec43 2b10 	vmov	d0, r2, r3
+ 800264e:	f004 f8d7 	bl	8006800 <ceil>
+ 8002652:	ec53 2b10 	vmov	r2, r3, d0
+ 8002656:	4610      	mov	r0, r2
+ 8002658:	4619      	mov	r1, r3
+ 800265a:	f7fe fa97 	bl	8000b8c <__aeabi_d2uiz>
+ 800265e:	4603      	mov	r3, r0
+ 8002660:	733b      	strb	r3, [r7, #12]
 		LCD_DrawLine(77, l, 1, DRAWMODE_CULL, flipStatus);
- 8002668:	7b79      	ldrb	r1, [r7, #13]
- 800266a:	4b11      	ldr	r3, [pc, #68]	; (80026b0 <GameTick+0x8e0>)
- 800266c:	781b      	ldrb	r3, [r3, #0]
- 800266e:	9300      	str	r3, [sp, #0]
- 8002670:	2301      	movs	r3, #1
- 8002672:	2201      	movs	r2, #1
- 8002674:	204d      	movs	r0, #77	; 0x4d
- 8002676:	f7fe ffdb 	bl	8001630 <LCD_DrawLine>
+ 8002662:	7b79      	ldrb	r1, [r7, #13]
+ 8002664:	4b11      	ldr	r3, [pc, #68]	; (80026ac <GameTick+0x8dc>)
+ 8002666:	781b      	ldrb	r3, [r3, #0]
+ 8002668:	9300      	str	r3, [sp, #0]
+ 800266a:	2301      	movs	r3, #1
+ 800266c:	2201      	movs	r2, #1
+ 800266e:	204d      	movs	r0, #77	; 0x4d
+ 8002670:	f7fe ffde 	bl	8001630 <LCD_DrawLine>
 		LCD_UpdateLine(display, 77);
- 800267a:	214d      	movs	r1, #77	; 0x4d
- 800267c:	6878      	ldr	r0, [r7, #4]
- 800267e:	f7fe fd7b 	bl	8001178 <LCD_UpdateLine>
+ 8002674:	214d      	movs	r1, #77	; 0x4d
+ 8002676:	6878      	ldr	r0, [r7, #4]
+ 8002678:	f7fe fd7e 	bl	8001178 <LCD_UpdateLine>
 		HAL_Delay(delayTime);
- 8002682:	7b3b      	ldrb	r3, [r7, #12]
- 8002684:	4618      	mov	r0, r3
- 8002686:	f001 f9e3 	bl	8003a50 <HAL_Delay>
+ 800267c:	7b3b      	ldrb	r3, [r7, #12]
+ 800267e:	4618      	mov	r0, r3
+ 8002680:	f001 f9e6 	bl	8003a50 <HAL_Delay>
 		if (GetButtonDown(JUMP_BUTTON))
- 800268a:	2004      	movs	r0, #4
- 800268c:	f7ff fa1a 	bl	8001ac4 <GetButtonDown>
- 8002690:	4603      	mov	r3, r0
- 8002692:	2b00      	cmp	r3, #0
- 8002694:	d106      	bne.n	80026a4 <GameTick+0x8d4>
+ 8002684:	2004      	movs	r0, #4
+ 8002686:	f7ff fa1d 	bl	8001ac4 <GetButtonDown>
+ 800268a:	4603      	mov	r3, r0
+ 800268c:	2b00      	cmp	r3, #0
+ 800268e:	d106      	bne.n	800269e <GameTick+0x8ce>
 	for (uint8_t l = 96; l > 28; l--) {
+ 8002690:	7b7b      	ldrb	r3, [r7, #13]
+ 8002692:	3b01      	subs	r3, #1
+ 8002694:	737b      	strb	r3, [r7, #13]
  8002696:	7b7b      	ldrb	r3, [r7, #13]
- 8002698:	3b01      	subs	r3, #1
- 800269a:	737b      	strb	r3, [r7, #13]
- 800269c:	7b7b      	ldrb	r3, [r7, #13]
- 800269e:	2b1c      	cmp	r3, #28
- 80026a0:	d8c1      	bhi.n	8002626 <GameTick+0x856>
- 80026a2:	e000      	b.n	80026a6 <GameTick+0x8d6>
+ 8002698:	2b1c      	cmp	r3, #28
+ 800269a:	d8c1      	bhi.n	8002620 <GameTick+0x850>
+ 800269c:	e000      	b.n	80026a0 <GameTick+0x8d0>
 			break;
- 80026a4:	bf00      	nop
+ 800269e:	bf00      	nop
 	}
 	return DINO_IS_DEAD;
- 80026a6:	2301      	movs	r3, #1
+ 80026a0:	2301      	movs	r3, #1
 }
- 80026a8:	4618      	mov	r0, r3
- 80026aa:	3710      	adds	r7, #16
- 80026ac:	46bd      	mov	sp, r7
- 80026ae:	bdb0      	pop	{r4, r5, r7, pc}
- 80026b0:	200000d0 	.word	0x200000d0
- 80026b4:	200000e8 	.word	0x200000e8
+ 80026a2:	4618      	mov	r0, r3
+ 80026a4:	3710      	adds	r7, #16
+ 80026a6:	46bd      	mov	sp, r7
+ 80026a8:	bdb0      	pop	{r4, r5, r7, pc}
+ 80026aa:	bf00      	nop
+ 80026ac:	200000d0 	.word	0x200000d0
+ 80026b0:	200000e8 	.word	0x200000e8
+ 80026b4:	200000da 	.word	0x200000da
  80026b8:	42680000 	.word	0x42680000
  80026bc:	42860000 	.word	0x42860000
 

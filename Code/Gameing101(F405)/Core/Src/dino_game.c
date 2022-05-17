@@ -59,6 +59,7 @@ static GameObj *fireHeader;
 static GameObj *lavaHeader;
 static GameObj *cloudHeader;
 static GameObj *plantHeader;
+static GameObj *birdHeader;
 static GameObj *dirtTexHeader;
 static GameObj *bumpAndDepressionHeader;
 
@@ -72,6 +73,7 @@ void GenerateGameBuffers() {
 	lavaHeader = GenLoopBuf(2);
 	cloudHeader = GenLoopBuf(2);
 	plantHeader = GenLoopBuf(4);
+	birdHeader = GenLoopBuf(2);
 	dirtTexHeader = GenLoopBuf(12);
 	bumpAndDepressionHeader = GenLoopBuf(4);
 }
@@ -97,6 +99,7 @@ void GamePrep(LS013B4DN04 *display) {
 	HeaderInit(fireHeader, (uint8_t*) FireAssets, 9, 25, 2);
 	HeaderInit(cloudHeader, (uint8_t*) CloudAssets, 6, 14, 1);
 	HeaderInit(plantHeader, (uint8_t*) PlantAssets, 2, 22, 5);
+	HeaderInit(birdHeader, (uint8_t*) BirdAssets, 3, 20, 2);
 	HeaderInit(lavaHeader, (uint8_t*) LavaAssets, 9, 6, 4);
 	HeaderInit(dirtTexHeader, (uint8_t*) DirtTextureAssets, 1, 1, 6);
 	HeaderInit(bumpAndDepressionHeader, (uint8_t*) BumpAndDepressionAssets, 1,
@@ -139,8 +142,7 @@ uint8_t GameTick(LS013B4DN04 *display) {
 				dinoState = GLIDING;
 				dinoVel -= gravity;
 				dinoVel += -dinoVel * parachuteGrag;
-			}
-			if (GetButton(DODGE_BUTTON)) {
+			} else if (GetButton(DODGE_BUTTON)) {
 				dinoState = DODGING;
 				dinoVel -= gravity * dodgeGravityMul;
 			} else {
@@ -191,9 +193,9 @@ uint8_t GameTick(LS013B4DN04 *display) {
 	if (tick - softStartTickLength - dirtTexTick == nextDirtTexTickDel) {
 
 		dirtTexHeader = Append(dirtTexHeader, Random(tick, 2, 6), 96,
-				Random(tick, 83, 87));
+				Random(tick, 83, 90));
 
-		nextDirtTexTickDel = Random(tick, 8, 30);
+		nextDirtTexTickDel = Random(tick, 8, 20);
 		dirtTexTick = tick - softStartTickLength;
 	}
 	// Bumps and depressions generation
@@ -318,10 +320,8 @@ uint8_t GameTick(LS013B4DN04 *display) {
 		dinoHeader->y++;
 		LCD_DrawLine(dinoHeader->y + 19, dinoHeader->x + 3, 10,
 		DRAWMODE_CULL, flipStatus);
-		LCD_LoadObjs(dinoHeader, DRAWMODE_ADD, REPEATMODE_NONE, flipStatus);
-		HAL_Delay(5);
+		RenderDino(dinoHeader, dinoState, 1);
 		LCD_UpdateFull(display);
-
 	}
 
 	for (uint8_t l = 96; l > 28; l--) {
