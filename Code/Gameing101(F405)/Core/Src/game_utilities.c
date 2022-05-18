@@ -55,16 +55,17 @@ GameObj* Append(GameObj *header, uint8_t index, short xPos, short yPos) {
 	return header;
 }
 
-void UpdateHeaderBmpIndex(GameObj *header, uint8_t index) {
-	header->index = index;
+void UpdateHeaderBmpIndex(GameObj *header, uint8_t toIndex) {
+	header->index = toIndex;
 }
 
-void UpdateAllBmpIndexs(GameObj *header, uint8_t index) {
+void UpdateAllBmpIndexs(GameObj *header, uint8_t toIndex, uint8_t ignoreIndex) {
 	GameObj *ptr = header;
 
 	// If the current pointer is occupied, look for the next pos
 	for (;;) {
-		ptr->index = index;
+		if (ptr->index != ignoreIndex)
+			ptr->index = toIndex;
 		ptr = ptr->next;
 
 		// Have cycled for a whole loop

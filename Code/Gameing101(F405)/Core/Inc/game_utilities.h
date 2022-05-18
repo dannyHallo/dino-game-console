@@ -21,6 +21,8 @@ typedef struct GameObj {
 	struct GameObj *next;
 } GameObj;
 
+#define NoIgnoringIndex 255
+
 bool IsOverlapping(short x1, short y1, short x2, short y2, short x3, short y3,
 		short x4, short y4);
 
@@ -28,15 +30,16 @@ bool IsFadedOutOfScene(struct GameObj *obj);
 
 GameObj* Append(struct GameObj *header, uint8_t index, short xPos, short yPos);
 
-void UpdateHeaderBmpIndex(GameObj *header, uint8_t index);
+void UpdateHeaderBmpIndex(GameObj *header, uint8_t toIndex);
 
-void UpdateAllBmpIndexs(GameObj *header, uint8_t index);
+void UpdateAllBmpIndexs(GameObj *header, uint8_t toIndex, uint8_t ignoreIndex);
 
 void DisableAll(GameObj *header);
 
 GameObj* GenLoopBuf(uint8_t size);
 
-void HeaderInit(GameObj *header, uint8_t *bmpAsset, uint8_t width, uint8_t height, uint8_t size);
+void HeaderInit(GameObj *header, uint8_t *bmpAsset, uint8_t width,
+		uint8_t height, uint8_t size);
 
 GameObj* ShiftX(GameObj *header, float byX);
 

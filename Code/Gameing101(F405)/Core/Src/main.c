@@ -124,6 +124,7 @@ int main(void) {
 	/* USER CODE BEGIN WHILE */
 	while (1) {
 		/* USER CODE END WHILE */
+
 		/* USER CODE BEGIN 3 */
 		GamePrep(&MemDisp);
 
@@ -234,7 +235,7 @@ static void MX_TIM1_Init(void) {
 	htim1.Instance = TIM1;
 	htim1.Init.Prescaler = 36000 - 1;
 	htim1.Init.CounterMode = TIM_COUNTERMODE_UP;
-	htim1.Init.Period = 1000 - 1;
+	htim1.Init.Period = 500 - 1;
 	htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
 	htim1.Init.RepetitionCounter = 0;
 	htim1.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
@@ -320,7 +321,8 @@ static void MX_GPIO_Init(void) {
 
 	/*Configure GPIO pin Output Level */
 	HAL_GPIO_WritePin(GPIOC,
-	KEY1_LED_Pin | KEY2_LED_Pin | KEY3_LED_Pin | KEY4_LED_Pin, GPIO_PIN_SET);
+			KEY1_LED_Pin | KEY2_LED_Pin | KEY3_LED_Pin | KEY4_LED_Pin,
+			GPIO_PIN_SET);
 
 	/*Configure GPIO pins : KEY1_Pin KEY2_Pin KEY3_Pin KEY4_Pin */
 	GPIO_InitStruct.Pin = KEY1_Pin | KEY2_Pin | KEY3_Pin | KEY4_Pin;
@@ -348,11 +350,11 @@ static void MX_GPIO_Init(void) {
 /* USER CODE BEGIN 4 */
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim) {
 	if (htim == &htim1) {
-		// fCom = 0.5Hz (min val)
+		// fEXTCOMIN = 1Hz (typ val)
 		COMM_TOGGLE;
+		KEY1_LED_TOGGLE;
 	}
 	if (htim == &htim2) {
-		KEY2_LED_TOGGLE;
 		KeyScan();
 	}
 }

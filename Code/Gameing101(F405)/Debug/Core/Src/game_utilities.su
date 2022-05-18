@@ -3,10 +3,10 @@
 ../Core/Src/game_utilities.c:27:10:Append	32	static
 ../Core/Src/game_utilities.c:58:6:UpdateHeaderBmpIndex	16	static
 ../Core/Src/game_utilities.c:62:6:UpdateAllBmpIndexs	24	static
-../Core/Src/game_utilities.c:77:6:DisableAll	24	static
-../Core/Src/game_utilities.c:92:10:GenLoopBuf	32	static
-../Core/Src/game_utilities.c:108:6:HeaderInit	32	static
-../Core/Src/game_utilities.c:125:10:ShiftX	24	static
-../Core/Src/game_utilities.c:151:10:DisableCurrent	24	static
-../Core/Src/game_utilities.c:162:6:ImgIndexRightShift	16	static
-../Core/Src/game_utilities.c:174:7:Random	16	static
+../Core/Src/game_utilities.c:78:6:DisableAll	24	static
+../Core/Src/game_utilities.c:93:10:GenLoopBuf	32	static
+../Core/Src/game_utilities.c:109:6:HeaderInit	32	static
+../Core/Src/game_utilities.c:126:10:ShiftX	24	static
+../Core/Src/game_utilities.c:152:10:DisableCurrent	24	static
+../Core/Src/game_utilities.c:163:6:ImgIndexRightShift	16	static
+../Core/Src/game_utilities.c:175:7:Random	16	static

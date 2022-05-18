@@ -72,6 +72,8 @@ for file in os.listdir("BitmapCollections"):
 if total_pics > 1:
     combined = int(
         input("\nMultiple files detected\n0 -> Separated (default)\n1 -> Combined\n") or "0")
+else: 
+    combined = 0
 
 for file in os.listdir("BitmapCollections"):
     if file.endswith(".png"):

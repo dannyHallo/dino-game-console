@@ -34,6 +34,8 @@ void LCD_UpdateFull(LS013B4DN04 *MemDisp);
 void LCD_UpdateLine(LS013B4DN04 *MemDisp, uint8_t lineNum);
 
 void LCD_LoadFull(uint8_t *BMP);
+void LCD_SaveBuf();
+void LCD_LoadBuf();
 
 void LCD_LoadObjs(GameObj *header, uint8_t drawMode, uint8_t repeatMode,
 		bool flip);

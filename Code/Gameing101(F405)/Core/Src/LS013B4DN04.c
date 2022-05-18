@@ -119,6 +119,15 @@ void LCD_LoadFull(uint8_t *BMP) {
 	memcpy(DispBuf, BMP, 1152);
 }
 
+void LCD_SaveBuf() {
+	memcpy(DispBuf2, DispBuf, 1152);
+}
+
+// Load full pic
+void LCD_LoadBuf() {
+	memcpy(DispBuf, DispBuf2, 1152);
+}
+
 void LCD_LoadObjs(GameObj *header, uint8_t drawMode, uint8_t repeatMode,
 		bool flip) {
 	GameObj *ptr = header;
