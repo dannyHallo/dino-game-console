@@ -113,7 +113,7 @@ void GamePrep(LS013B4DN04 *display) {
 	HeaderInit(fireHeader, (uint8_t*) FireAssets, 9, 25, 2);
 	HeaderInit(cloudHeader, (uint8_t*) CloudAssets, 6, 14, 1);
 	HeaderInit(plantHeader, (uint8_t*) PlantAssets, 2, 22, 5);
-	HeaderInit(birdHeader, (uint8_t*) BirdAssets, 3, 20, 2);
+	HeaderInit(birdHeader, (uint8_t*) BirdAssets, 3, 15, 2);
 	HeaderInit(signsHeader, (uint8_t*) SignsAssets, 2, 19, 1);
 	HeaderInit(lavaHeader, (uint8_t*) LavaAssets, 9, 6, 4);
 	HeaderInit(dirtTexHeader, (uint8_t*) DirtTextureAssets, 1, 1, 6);
@@ -134,6 +134,16 @@ void GamePrep(LS013B4DN04 *display) {
 	LCD_UpdateFull(display);
 	while (!GetButtonDown(JUMP_BUTTON))
 		;
+//
+//	// Flip screen
+//	for (uint8_t i = 0; i < 3; i++) {
+//		HAL_Delay(100);
+//		LCD_Invert();
+//		LCD_UpdateFull(display);
+//	}
+
+	flipStatus = 1;
+
 	dinoVel = initVel;
 	dinoState = JUMPING;
 }
@@ -141,7 +151,7 @@ void GamePrep(LS013B4DN04 *display) {
 uint8_t GameTick(LS013B4DN04 *display) {
 
 	// Day and night invertion
-	flipStatus = ((tick / 800) % 3 == 2) ? 1 : 0;
+//	flipStatus = ((tick / 800) % 3 == 2) ? 1 : 0;
 	LCD_Fill(flipStatus);
 
 	// Roll ground plane
@@ -239,13 +249,13 @@ uint8_t GameTick(LS013B4DN04 *display) {
 
 	// Bird Sign Generation
 	if (tick - birdGenPreTick - birdTick == nextBirdTickDel) {
-		signsHeader = Append(signsHeader, BirdSign, 96, 65);
+		signsHeader = Append(signsHeader, BirdSign, 96, Random(tick, 61, 62));
 	}
 	// Bird generation
 	if (tick - birdGenPreTick - birdTick - 200 == nextBirdTickDel) {
 
 		birdHeader = Append(birdHeader, BirdWithWingsDownwards, 96,
-				Random(tick, 29, 48));
+				Random(tick, 10, 51));
 
 		nextBirdTickDel = Random(tick, 250, 800);
 		birdTick = tick - birdGenPreTick;
@@ -258,7 +268,7 @@ uint8_t GameTick(LS013B4DN04 *display) {
 	signsHeader = ShiftX(signsHeader, -1 * overallSpeed);
 	bumpAndDepressionHeader = ShiftX(bumpAndDepressionHeader,
 			-1 * overallSpeed);
-	birdHeader = ShiftX(birdHeader, -1.5 * overallSpeed);
+	birdHeader = ShiftX(birdHeader, -1.2 * overallSpeed);
 
 	// Air objs shift
 	cloudHeader = ShiftX(cloudHeader, -0.1 * overallSpeed);
@@ -305,7 +315,7 @@ uint8_t GameTick(LS013B4DN04 *display) {
 	NoIgnoringIndex);
 	UpdateAllBmpIndexs(birdHeader,
 	BirdWithWingsDownwards + (tick / (int) (8 / overallSpeed)) % 2,
-			NoIgnoringIndex);
+	NoIgnoringIndex);
 
 	LCD_LoadObjs(lavaHeader, DRAWMODE_ADD, REPEATMODE_NONE, flipStatus);
 	LCD_LoadObjs(plantHeader, DRAWMODE_ADD, REPEATMODE_NONE, flipStatus);
@@ -463,8 +473,8 @@ bool DinoGetsStuck() {
 			case JUMPING:
 			case RUNNING:
 				if (IsOverlapping(dinoHeader->x + 10, dinoHeader->y + 2,
-						dinoHeader->x + 17, dinoHeader->y + 17, ptr->x,
-						ptr->y + 4, ptr->x + 22, ptr->y + 15)) {
+						dinoHeader->x + 17, dinoHeader->y + 17, ptr->x + 2,
+						ptr->y + 3, ptr->x + 14, ptr->y + 12)) {
 					return 1;
 				}
 				break;
@@ -472,16 +482,16 @@ bool DinoGetsStuck() {
 			case GLIDING:
 			case DODGING:
 				if (IsOverlapping(dinoHeader->x + 9, dinoHeader->y + 11,
-						dinoHeader->x + 30, dinoHeader->y + 17, ptr->x,
-						ptr->y + 4, ptr->x + 22, ptr->y + 15)) {
+						dinoHeader->x + 30, dinoHeader->y + 17, ptr->x + 2,
+						ptr->y + 3, ptr->x + 14, ptr->y + 12)) {
 					return 1;
 				}
 				break;
 
 			case FIRING:
 				if (IsOverlapping(dinoHeader->x + 10, dinoHeader->y + 2,
-						dinoHeader->x + 18, dinoHeader->y + 17, ptr->x,
-						ptr->y + 4, ptr->x + 22, ptr->y + 15)) {
+						dinoHeader->x + 18, dinoHeader->y + 17, ptr->x + 2,
+						ptr->y + 3, ptr->x + 14, ptr->y + 12)) {
 					return 1;
 				}
 				break;
