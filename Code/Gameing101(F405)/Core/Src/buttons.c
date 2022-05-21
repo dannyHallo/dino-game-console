@@ -19,7 +19,12 @@ const uint8_t KeyPins[4] = { KEY1_Pin, KEY2_Pin, KEY3_Pin, KEY4_Pin };
 
 static uint8_t KeyBuffer[4] = { 0, 0, 0, 0 };
 static bool KeyStates[4] = { 0, 0, 0, 0 };
-static bool KeysUsedToBeLow[4] = { 0, 0, 0, 0 };
+
+static uint8_t KeysUsedToBeLow[4] = { 0, 0, 0, 0 };
+static uint8_t KeysUsedToBeHigh[4] = { 0, 0, 0, 0 };
+
+static uint16_t KeyCounters[4] = { 0, 0, 0, 0 };
+static uint16_t KeyCounterOverflowEdge[4] = { 0, 0, 0, 0 };
 
 uint8_t LookupKeyState(uint8_t n) {
 	if (HAL_GPIO_ReadPin(KEYS_GPIO_Port, KeyPins[n])) {
@@ -40,22 +45,65 @@ void KeyScan() {
 	}
 }
 
+void KeyCounterInit(uint8_t buttonIndex, uint16_t overflowEdge) {
+	// To machine index
+	buttonIndex--;
+
+	KeyCounters[buttonIndex] = 0;
+	KeyCounterOverflowEdge[buttonIndex] = overflowEdge;
+}
+
+void KeyCounterTick(uint8_t buttonIndex) {
+	// To machine index
+	buttonIndex--;
+
+	if (KeyCounters[buttonIndex] < KeyCounterOverflowEdge[buttonIndex] - 1) {
+		KeyCounters[buttonIndex]++;
+	}
+}
+
+bool KeyCounterIsTicking(uint8_t buttonIndex) {
+	// To machine index
+	buttonIndex--;
+
+	if (KeyCounters[buttonIndex] < KeyCounterOverflowEdge[buttonIndex] - 1)
+		return true;
+	else
+		return false;
+}
+
 bool GetButton(uint8_t buttonIndex) {
 	// To machine index
 	buttonIndex--;
 	return KeyStates[buttonIndex];
 }
 
-bool GetButtonDown(uint8_t buttonIndex) {
+bool GetButtonUp(uint8_t buttonIndex, uint8_t identifier) {
 	// To machine index
 	buttonIndex--;
 
-	if(!KeyStates[buttonIndex]){
-		KeysUsedToBeLow[buttonIndex] = true;
+	if (KeyStates[buttonIndex]) {
+		KeysUsedToBeHigh[buttonIndex] = identifier;
 	}
 
-	if (KeyStates[buttonIndex] && KeysUsedToBeLow[buttonIndex]) {
-		KeysUsedToBeLow[buttonIndex] = false;
+	if (!KeyStates[buttonIndex]
+			&& KeysUsedToBeHigh[buttonIndex] == identifier) {
+		KeysUsedToBeHigh[buttonIndex] = 0;
+		return 1;
+	}
+	return 0;
+}
+
+bool GetButtonDown(uint8_t buttonIndex, uint8_t identifier) {
+	// To machine index
+	buttonIndex--;
+
+	if (!KeyStates[buttonIndex]) {
+		KeysUsedToBeLow[buttonIndex] = identifier;
+	}
+
+	if (KeyStates[buttonIndex] && KeysUsedToBeLow[buttonIndex] == identifier) {
+		KeysUsedToBeLow[buttonIndex] = 0;
 		return 1;
 	}
 	return 0;

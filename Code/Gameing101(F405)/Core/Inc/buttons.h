@@ -15,6 +15,11 @@ uint8_t LookupKeyState(uint8_t n);
 
 void KeyScan();
 bool GetButton(uint8_t buttonIndex);
-bool GetButtonDown(uint8_t buttonIndex);
+bool GetButtonUp(uint8_t buttonIndex, uint8_t identifier);
+bool GetButtonDown(uint8_t buttonIndex, uint8_t identifier);
+
+void KeyCounterInit(uint8_t buttonIndex, uint16_t overflowEdge);
+void KeyCounterTick(uint8_t buttonIndex);
+bool KeyCounterIsTicking(uint8_t buttonIndex);
 
 #endif /* INC_BUTTONS_H_ */

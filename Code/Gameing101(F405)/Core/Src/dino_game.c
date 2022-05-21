@@ -16,9 +16,9 @@
 #include <math.h>
 
 #define DODGE_BUTTON 1
-#define GLIDE_BUTTON 2
+#define BUTTON_1 2
 #define FIRE_BUTTON 3
-#define JUMP_BUTTON 4
+#define BUTTON_2 4
 
 // GRAVITY
 const float gravity = 0.08;
@@ -35,6 +35,7 @@ const uint16_t terrainGenPreTick = 100;
 const uint16_t birdGenPreTick = 160;
 
 static uint32_t tick;
+
 static uint32_t plantTick;
 static uint32_t cloudTick;
 static uint32_t birdTick;
@@ -55,7 +56,8 @@ static uint16_t nextDirtTexTickDel;
 #define JUMPING 3
 #define GLIDING 4
 #define DODGING 5
-#define DIED 6
+#define CRAWLING 6
+#define DIED 7
 static uint8_t dinoState;
 
 static uint8_t groundLength;
@@ -132,7 +134,7 @@ void GamePrep(LS013B4DN04 *display) {
 	LCD_Print("experimental", 0, 85, DRAWMODE_ADD, REPEATMODE_NONE, flipStatus);
 
 	LCD_UpdateFull(display);
-	while (!GetButtonDown(JUMP_BUTTON))
+	while (!GetButtonDown(BUTTON_2, 1))
 		;
 //
 //	// Flip screen
@@ -166,64 +168,110 @@ uint8_t GameTick(LS013B4DN04 *display) {
 	}
 
 	switch (dinoState) {
-	case JUMPING:
-	case GLIDING:
-	case DODGING:
-		// Dino above ground
-		if (dinoHeader->y <= dinoGroundPos) {
 
-			dinoHeader->y -= dinoVel;
-			if (GetButton(GLIDE_BUTTON) && dinoVel < 0) {
-				dinoState = GLIDING;
-				dinoVel -= gravity;
-				dinoVel += -dinoVel * parachuteGrag;
-			} else if (GetButton(DODGE_BUTTON)) {
-				dinoState = DODGING;
-				dinoVel -= gravity * dodgeGravityMul;
-			} else {
-				dinoState = JUMPING;
-				dinoVel -=
-						GetButton(JUMP_BUTTON) ?
-								(gravity * longPressGravityMul) : gravity;
-			}
-			break;
+	case JUMPING:
+
+		dinoVel -=
+				GetButton(BUTTON_2) ? (gravity * longPressGravityMul) : gravity;
+		dinoHeader->y -= dinoVel;
+
+		if (GetButtonDown(BUTTON_1, 2))
+			dinoState = GLIDING;
+
+		// Dino landed
+		if (dinoHeader->y > dinoGroundPos)
+			dinoState = RUNNING;
+
+		break;
+
+	case GLIDING:
+
+		if (dinoVel < 0) {
+			dinoVel -= gravity;
+			dinoVel += -dinoVel * parachuteGrag;
+		} else {
+			dinoVel -= gravity;
 		}
-		// First land continue
+
+		dinoHeader->y -= dinoVel;
+
+		if (!GetButton(BUTTON_1))
+			dinoState = JUMPING;
+		else if (GetButton(BUTTON_2))
+			dinoState = DODGING;
+
+		// Dino landed
+		if (dinoHeader->y > dinoGroundPos)
+			dinoState = RUNNING;
+		break;
+
+	case DODGING:
+
+		// In air
+		if (dinoHeader->y <= dinoGroundPos) {
+			dinoVel -= gravity * dodgeGravityMul;
+			dinoHeader->y -= dinoVel;
+		}
+
+		if (!GetButton(BUTTON_1))
+			dinoState = JUMPING;
+		else if (!GetButton(BUTTON_2))
+			dinoState = GLIDING;
+
+		// Dino landed
+		if (dinoHeader->y > dinoGroundPos)
+			dinoState = RUNNING;
+		break;
+
+	case CRAWLING:
+		if (!GetButton(BUTTON_1)) {
+			dinoState = RUNNING;
+		} else if (GetButtonDown(BUTTON_2, 5)) {
+			fireTick = fireTickLength;
+			lavaHeader = Append(lavaHeader, 0, 57, 71);
+			dinoState = FIRING;
+		}
+		break;
+
 	case RUNNING:
+		dinoHeader->y = dinoGroundPos;
+		dinoVel = 0;
+
+		if (GetButton(BUTTON_1))
+			dinoState = CRAWLING;
+		else if (GetButtonDown(BUTTON_2, 4)) {
+			dinoVel = initVel;
+			dinoState = JUMPING;
+		}
+
+		break;
+
 	case FIRING:
 		dinoHeader->y = dinoGroundPos;
 		dinoVel = 0;
 
-		if (GetButtonDown(JUMP_BUTTON)) {
-			dinoVel = initVel;
-			dinoState = JUMPING;
-		} else if (GetButton(DODGE_BUTTON)) {
-			dinoState = DODGING;
-		} else if (GetButtonDown(FIRE_BUTTON)) {
-			fireTick = fireTickLength;
-			lavaHeader = Append(lavaHeader, 0, 57, 71);
-		} else if (GetButton(FIRE_BUTTON)) {
-			dinoState = FIRING;
-		} else {
+		if (!GetButton(BUTTON_1))
 			dinoState = RUNNING;
-		}
+		else if (!GetButton(BUTTON_2))
+			dinoState = CRAWLING;
+
 		break;
 	}
 
-	// Plant generation
+// Plant generation
 	if (tick - terrainGenPreTick - plantTick == nextPlantTickDel) {
 		plantHeader = Append(plantHeader, PlantNormal, 96, 59);
 		nextPlantTickDel = Random(tick, 80, 330);
 		plantTick = tick - terrainGenPreTick;
 	}
-	// Cloud generation
+// Cloud generation
 	if (tick - terrainGenPreTick - cloudTick == nextCloudTickDel) {
 		cloudHeader = Append(cloudHeader, CloudNormal, 96,
 				Random(tick, 12, 20));
 		nextCloudTickDel = Random(tick, 1200, 2000);
 		cloudTick = tick - terrainGenPreTick;
 	}
-	// Dirt texture generation
+// Dirt texture generation
 	if (tick - terrainGenPreTick - dirtTexTick == nextDirtTexTickDel) {
 
 		dirtTexHeader = Append(dirtTexHeader, Random(tick, 2, 6), 96,
@@ -232,7 +280,7 @@ uint8_t GameTick(LS013B4DN04 *display) {
 		nextDirtTexTickDel = Random(tick, 8, 20);
 		dirtTexTick = tick - terrainGenPreTick;
 	}
-	// Bumps and depressions generation
+// Bumps and depressions generation
 	if (tick - terrainGenPreTick - bumpOrDepressionTick
 			== nextBumpOrDepressionTickDel) {
 		if (Random(tick, 0, 1)) {
@@ -247,11 +295,11 @@ uint8_t GameTick(LS013B4DN04 *display) {
 		bumpOrDepressionTick = tick - terrainGenPreTick;
 	}
 
-	// Bird Sign Generation
+// Bird Sign Generation
 	if (tick - birdGenPreTick - birdTick == nextBirdTickDel) {
 		signsHeader = Append(signsHeader, BirdSign, 96, Random(tick, 61, 62));
 	}
-	// Bird generation
+// Bird generation
 	if (tick - birdGenPreTick - birdTick - 200 == nextBirdTickDel) {
 
 		birdHeader = Append(birdHeader, BirdWithWingsDownwards, 96,
@@ -261,7 +309,7 @@ uint8_t GameTick(LS013B4DN04 *display) {
 		birdTick = tick - birdGenPreTick;
 	}
 
-	// Ground objs shift
+// Ground objs shift
 	plantHeader = ShiftX(plantHeader, -1 * overallSpeed);
 	lavaHeader = ShiftX(lavaHeader, -1 * overallSpeed);
 	dirtTexHeader = ShiftX(dirtTexHeader, -1 * overallSpeed);
@@ -270,10 +318,10 @@ uint8_t GameTick(LS013B4DN04 *display) {
 			-1 * overallSpeed);
 	birdHeader = ShiftX(birdHeader, -1.2 * overallSpeed);
 
-	// Air objs shift
+// Air objs shift
 	cloudHeader = ShiftX(cloudHeader, -0.1 * overallSpeed);
 
-	// Cull plant
+// Cull plant
 	ptr = plantHeader;
 	for (;;) {
 		if (ptr->full) {
@@ -364,7 +412,7 @@ uint8_t GameTick(LS013B4DN04 *display) {
 		LCD_DrawLine(77, l, 1, DRAWMODE_CULL, flipStatus);
 		LCD_UpdateLine(display, 77);
 		HAL_Delay(delayTime);
-		if (GetButtonDown(JUMP_BUTTON))
+		if (GetButtonDown(BUTTON_2, 6))
 			break;
 	}
 	return DINO_IS_DEAD;
@@ -387,12 +435,15 @@ void RenderDino(GameObj *dino, uint8_t dinoState, bool isDead) {
 			UpdateHeaderBmpIndex(dino, DinoGliding);
 			dinoHeader->x = DinoXPosWhenGliding;
 			break;
+		case CRAWLING:
+			LCD_DrawLine(77, 8, 8, DRAWMODE_CULL, flipStatus);
 		case DODGING:
 			UpdateHeaderBmpIndex(dino,
 			DinoDodgingL + (tick / (int) (12 / overallSpeed)) % 2);
 			dinoHeader->x = DinoXPosWhenDodging;
 			break;
 		case FIRING:
+			LCD_DrawLine(77, 8, 8, DRAWMODE_CULL, flipStatus);
 			UpdateHeaderBmpIndex(dino,
 			DinoFiringL + (tick / (int) (12 / overallSpeed)) % 2);
 			dinoHeader->x = DinoXPosDefault;
@@ -410,11 +461,14 @@ void RenderDino(GameObj *dino, uint8_t dinoState, bool isDead) {
 			UpdateHeaderBmpIndex(dino, DinoGlidingDead);
 			dinoHeader->x = DinoXPosWhenGliding;
 			break;
+		case CRAWLING:
+			LCD_DrawLine(77, 8, 8, DRAWMODE_CULL, flipStatus);
 		case DODGING:
 			UpdateHeaderBmpIndex(dino, DinoDodgingDead);
 			dinoHeader->x = DinoXPosWhenDodging;
 			break;
 		case FIRING:
+			LCD_DrawLine(77, 8, 8, DRAWMODE_CULL, flipStatus);
 			UpdateHeaderBmpIndex(dino, DinoFiringDead);
 			dinoHeader->x = DinoXPosDefault;
 			break;
@@ -441,16 +495,10 @@ bool DinoGetsStuck() {
 
 			case GLIDING:
 			case DODGING:
+			case CRAWLING:
+			case FIRING:
 				if (IsOverlapping(dinoHeader->x + 9, dinoHeader->y + 11,
 						dinoHeader->x + 30, dinoHeader->y + 17, ptr->x, 59,
-						ptr->x + 9, 59 + 21)) {
-					return 1;
-				}
-				break;
-
-			case FIRING:
-				if (IsOverlapping(dinoHeader->x + 10, dinoHeader->y + 2,
-						dinoHeader->x + 18, dinoHeader->y + 17, ptr->x, 59,
 						ptr->x + 9, 59 + 21)) {
 					return 1;
 				}
@@ -481,16 +529,9 @@ bool DinoGetsStuck() {
 
 			case GLIDING:
 			case DODGING:
+			case FIRING:
 				if (IsOverlapping(dinoHeader->x + 9, dinoHeader->y + 11,
 						dinoHeader->x + 30, dinoHeader->y + 17, ptr->x + 2,
-						ptr->y + 3, ptr->x + 14, ptr->y + 12)) {
-					return 1;
-				}
-				break;
-
-			case FIRING:
-				if (IsOverlapping(dinoHeader->x + 10, dinoHeader->y + 2,
-						dinoHeader->x + 18, dinoHeader->y + 17, ptr->x + 2,
 						ptr->y + 3, ptr->x + 14, ptr->y + 12)) {
 					return 1;
 				}

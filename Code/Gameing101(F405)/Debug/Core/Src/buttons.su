@@ -1,4 +1,8 @@
-../Core/Src/buttons.c:24:9:LookupKeyState	16	static
-../Core/Src/buttons.c:31:6:KeyScan	24	static
-../Core/Src/buttons.c:43:6:GetButton	16	static
-../Core/Src/buttons.c:49:6:GetButtonDown	16	static
+../Core/Src/buttons.c:29:9:LookupKeyState	16	static
+../Core/Src/buttons.c:36:6:KeyScan	24	static
+../Core/Src/buttons.c:48:6:KeyCounterInit	16	static
+../Core/Src/buttons.c:56:6:KeyCounterTick	16	static
+../Core/Src/buttons.c:65:6:KeyCounterIsTicking	16	static
+../Core/Src/buttons.c:75:6:GetButton	16	static
+../Core/Src/buttons.c:81:6:GetButtonUp	16	static
+../Core/Src/buttons.c:97:6:GetButtonDown	16	static
