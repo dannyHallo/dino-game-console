@@ -10,7 +10,8 @@
 ../Core/Src/LS013B4DN04.c:131:6:LCD_LoadObjs	48	static
 ../Core/Src/LS013B4DN04.c:149:6:LCD_LoadObj	56	static
 ../Core/Src/LS013B4DN04.c:224:6:LCD_DrawLine	32	static
-../Core/Src/LS013B4DN04.c:264:6:LCD_Invert	16	static
-../Core/Src/LS013B4DN04.c:273:6:LCD_Fill	16	static
-../Core/Src/LS013B4DN04.c:278:6:LCD_DrawCircle	40	static
-../Core/Src/LS013B4DN04.c:322:6:LCD_Print	56	static
+../Core/Src/LS013B4DN04.c:263:6:LCD_DrawRect	40	static
+../Core/Src/LS013B4DN04.c:274:6:LCD_Invert	16	static
+../Core/Src/LS013B4DN04.c:283:6:LCD_Fill	16	static
+../Core/Src/LS013B4DN04.c:288:6:LCD_DrawCircle	40	static
+../Core/Src/LS013B4DN04.c:332:6:LCD_Print	56	static

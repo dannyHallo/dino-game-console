@@ -47,6 +47,8 @@ void LCD_LoadObj(uint8_t *bmp, float posX, float posY, uint8_t width,
 void LCD_DrawLine(uint8_t startingRow, int startingPoint, uint8_t length,
 		uint8_t drawMode, bool flip);
 
+void LCD_DrawRect(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, uint8_t drawMode, bool flip);
+
 void LCD_BufClean(void);
 
 void LCD_Invert(void);

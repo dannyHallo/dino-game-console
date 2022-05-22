@@ -62,7 +62,6 @@ static uint8_t groundLength;
 static float overallSpeed;
 
 static GameObj *ptr;
-static GameObj *ptr2;
 
 static GameObj *dinoHeader;
 static GameObj *fireHeader;
@@ -76,6 +75,7 @@ static GameObj *bumpAndDepressionHeader;
 void RenderDino(GameObj *dino, uint8_t dinoState, bool isDead);
 bool DinoGetsStuck();
 void MeltPlants();
+void RenderUI();
 
 void GenerateGameBuffers() {
 	dinoHeader = GenLoopBuf(1);
@@ -90,7 +90,7 @@ void GenerateGameBuffers() {
 }
 
 void GamePrep(LS013B4DN04 *display) {
-	flipStatus = 0;
+	flipStatus = 1;
 
 	nextPlantTickDel = 0;
 	nextCloudTickDel = 0;
@@ -127,7 +127,7 @@ void GamePrep(LS013B4DN04 *display) {
 
 	LCD_LoadObjs(dinoHeader, DRAWMODE_ADD, REPEATMODE_NONE, flipStatus);
 
-	LCD_Print("experimental", 0, 85, DRAWMODE_ADD, REPEATMODE_NONE, flipStatus);
+	LCD_Print("a\tbit\tbetter", 6, 10, DRAWMODE_ADD, REPEATMODE_NONE, flipStatus);
 
 	LCD_UpdateFull(display);
 	while (!GetButtonDown(BUTTON_2, 1))
@@ -147,7 +147,7 @@ void GamePrep(LS013B4DN04 *display) {
 uint8_t GameTick(LS013B4DN04 *display) {
 
 	// Day and night invertion
-	flipStatus = ((tick / 800) % 3 == 2) ? 0 : 1;
+//	flipStatus = ((tick / 800) % 3 == 2) ? 0 : 1;
 
 	LCD_Fill(flipStatus);
 
@@ -368,6 +368,7 @@ uint8_t GameTick(LS013B4DN04 *display) {
 		goto Dead;
 
 	RenderDino(dinoHeader, dinoState, 0);
+	RenderUI();
 
 	tick++;
 	LCD_UpdateFull(display);
@@ -384,6 +385,7 @@ uint8_t GameTick(LS013B4DN04 *display) {
 
 	LCD_LoadBuf();
 	RenderDino(dinoHeader, dinoState, 1);
+
 	LCD_UpdateFull(display);
 
 	HAL_Delay(300);
@@ -404,6 +406,11 @@ uint8_t GameTick(LS013B4DN04 *display) {
 			break;
 	}
 	return DINO_IS_DEAD;
+}
+
+void RenderUI(){
+	LCD_Print("gas", 2, 2, DRAWMODE_ADD, REPEATMODE_NONE, flipStatus);
+	LCD_DrawRect(24, 3, 60, 8, DRAWMODE_ADD, flipStatus);
 }
 
 void RenderDino(GameObj *dino, uint8_t dinoState, bool isDead) {

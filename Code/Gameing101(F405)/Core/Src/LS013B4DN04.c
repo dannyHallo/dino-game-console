@@ -260,6 +260,16 @@ void LCD_DrawLine(uint8_t startingRow, int startingPoint, uint8_t length,
 	}
 }
 
+void LCD_DrawRect(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, uint8_t drawMode, bool flip){
+	if(x1 >= x2 || y1 >= y2)
+		return;
+
+	for(uint8_t currentRow = y1; currentRow <= y2; currentRow++){
+		LCD_DrawLine(currentRow, x1, x2 - x1 + 1, drawMode, flip);
+	}
+
+}
+
 // Inverts color, WILL CAUSE PERFORMANCE LOSS
 void LCD_Invert(void) {
 	uint16_t invt = 1152;
@@ -323,7 +333,7 @@ void LCD_Print(char *str, short xPos, short yPos, uint8_t drawMode,
 		uint8_t repeatMode, bool flip) {
 	short strLength = strlen(str);
 	short lineSpacing = 1;
-	short charSpacing = -1;
+	short charSpacing = 0;
 	short spaceSpacing = 1;
 	short tabSpacing = 8 + charSpacing;
 
