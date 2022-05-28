@@ -333,7 +333,7 @@ void LCD_Print(char *str, short xPos, short yPos, uint8_t drawMode,
 		uint8_t repeatMode, bool flip) {
 	short strLength = strlen(str);
 	short lineSpacing = 1;
-	short charSpacing = 0;
+	short charSpacing = -1;
 	short spaceSpacing = 1;
 	short tabSpacing = 8 + charSpacing;
 

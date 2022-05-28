@@ -37,9 +37,9 @@ void KeyScan() {
 	for (uint8_t j = 0; j < 4; j++) {
 		KeyBuffer[j] = ((KeyBuffer[j] << 1) | (LookupKeyState(j) & 0x01));
 
-		if ((KeyBuffer[j] | 0xf0) == 0xff) {
+		if (KeyBuffer[j] == 0xff) {
 			KeyStates[j] = 1;
-		} else if ((KeyBuffer[j] | 0xf0) == 0xf0) {
+		} else if (KeyBuffer[j] == 0x00) {
 			KeyStates[j] = 0;
 		}
 	}

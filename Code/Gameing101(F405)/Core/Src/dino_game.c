@@ -66,7 +66,7 @@ static GameObj *ptr;
 static GameObj *dinoHeader;
 static GameObj *fireHeader;
 static GameObj *cloudHeader;
-static GameObj *plantHeader;
+static GameObj *smallPlantHeader;
 static GameObj *birdHeader;
 static GameObj *signsHeader;
 static GameObj *dirtTexHeader;
@@ -82,7 +82,7 @@ void GenerateGameBuffers() {
 	fireHeader = GenLoopBuf(1);
 
 	cloudHeader = GenLoopBuf(2);
-	plantHeader = GenLoopBuf(4);
+	smallPlantHeader = GenLoopBuf(4);
 	birdHeader = GenLoopBuf(2);
 	signsHeader = GenLoopBuf(2);
 	dirtTexHeader = GenLoopBuf(12);
@@ -111,7 +111,7 @@ void GamePrep(LS013B4DN04 *display) {
 	HeaderInit(dinoHeader, (uint8_t*) DinoAssets, 4, 22, 14);
 	HeaderInit(fireHeader, (uint8_t*) FireAssets, 9, 25, 2);
 	HeaderInit(cloudHeader, (uint8_t*) CloudAssets, 6, 14, 1);
-	HeaderInit(plantHeader, (uint8_t*) PlantAssets, 2, 22, 5);
+	HeaderInit(smallPlantHeader, (uint8_t*) SmallPlantAssets, 2, 22, 6);
 	HeaderInit(birdHeader, (uint8_t*) BirdAssets, 3, 15, 2);
 	HeaderInit(signsHeader, (uint8_t*) SignsAssets, 2, 19, 1);
 	HeaderInit(dirtTexHeader, (uint8_t*) DirtTextureAssets, 1, 1, 6);
@@ -127,10 +127,10 @@ void GamePrep(LS013B4DN04 *display) {
 
 	LCD_LoadObjs(dinoHeader, DRAWMODE_ADD, REPEATMODE_NONE, flipStatus);
 
-	LCD_Print("a\tbit\tbetter", 6, 10, DRAWMODE_ADD, REPEATMODE_NONE, flipStatus);
+	LCD_Print("designed\nwith\t#", 4, 2, DRAWMODE_ADD, REPEATMODE_NONE, flipStatus);
 
 	LCD_UpdateFull(display);
-	while (!GetButtonDown(BUTTON_2, 1))
+	while (!GetButtonDown(BUTTON_2, 0))
 		;
 //
 //	// Flip screen
@@ -170,7 +170,9 @@ uint8_t GameTick(LS013B4DN04 *display) {
 				GetButton(BUTTON_2) ? (gravity * longPressGravityMul) : gravity;
 		dinoHeader->y -= dinoVel;
 
-		if (GetButtonDown(BUTTON_1, 2))
+		if (GetButtonDown(BUTTON_1, 0))
+			dinoState = FIRING;
+		else if (GetButtonDown(BUTTON_2, 1))
 			dinoState = GLIDING;
 
 		// Dino landed
@@ -190,72 +192,89 @@ uint8_t GameTick(LS013B4DN04 *display) {
 
 		dinoHeader->y -= dinoVel;
 
-		if (!GetButton(BUTTON_1))
+		if (!GetButton(BUTTON_2))
 			dinoState = JUMPING;
-		else if (GetButton(BUTTON_2))
-			dinoState = DODGING;
+		else if (GetButton(BUTTON_1))
+			dinoState = FIRING;
 
 		// Dino landed
 		if (dinoHeader->y > dinoGroundPos)
-			dinoState = CRAWLING;
-		break;
-
-	case DODGING:
-
-		// In air
-		if (dinoHeader->y <= dinoGroundPos) {
-			dinoVel -= gravity * dodgeGravityMul;
-			dinoHeader->y -= dinoVel;
-		}
-
-		if (!GetButton(BUTTON_1))
-			dinoState = JUMPING;
-		else if (!GetButton(BUTTON_2))
-			dinoState = GLIDING;
-
-		// Dino landed
-		if (dinoHeader->y > dinoGroundPos) {
-			dinoState = CRAWLING;
-		}
-
-		break;
-
-	case CRAWLING:
-		if (!GetButton(BUTTON_1)) {
 			dinoState = RUNNING;
-		} else if (GetButtonDown(BUTTON_2, 5)) {
-			dinoState = FIRING;
-		}
 		break;
+
+//	case DODGING:
+//
+//		// In air
+//		if (dinoHeader->y <= dinoGroundPos) {
+//			dinoVel -= gravity * dodgeGravityMul;
+//			dinoHeader->y -= dinoVel;
+//		}
+//
+//		if (!GetButton(BUTTON_1))
+//			dinoState = JUMPING;
+//		else if (!GetButton(BUTTON_2))
+//			dinoState = GLIDING;
+//
+//		// Dino landed
+//		if (dinoHeader->y > dinoGroundPos) {
+//			dinoState = CRAWLING;
+//		}
+//
+//		break;
+
+	case FIRING:
+		// In air
+		if (dinoHeader->y < dinoGroundPos) {
+			dinoVel -= gravity;
+			dinoHeader->y -= dinoVel;
+
+			if (!GetButton(BUTTON_1))
+				dinoState = JUMPING;
+		}
+
+		// On ground
+		else {
+			dinoVel = 0;
+			dinoHeader->y = dinoGroundPos;
+
+			if (!GetButton(BUTTON_1))
+				dinoState = RUNNING;
+			else if (GetButtonDown(BUTTON_2, 2)){
+				dinoVel = initVel;
+				dinoHeader->y -= 1;
+			}
+
+		}
+
+		break;
+
+//	case CRAWLING:
+//		if (!GetButton(BUTTON_1)) {
+//			dinoState = RUNNING;
+//		} else if (!GetButton(BUTTON_2)) {
+//			dinoState = RUNNING;
+//		}
+//		break;
 
 	case RUNNING:
 		dinoHeader->y = dinoGroundPos;
 		dinoVel = 0;
 
-		if (GetButton(BUTTON_1))
-			dinoState = CRAWLING;
-		else if (GetButtonDown(BUTTON_2, 4)) {
+		if (GetButtonDown(BUTTON_1, 1))
+			dinoState = FIRING;
+		else if (GetButtonDown(BUTTON_2, 3)) {
 			dinoVel = initVel;
 			dinoState = JUMPING;
 		}
 
 		break;
 
-	case FIRING:
-		dinoHeader->y = dinoGroundPos;
-		dinoVel = 0;
-
-		if (!GetButton(BUTTON_1))
-			dinoState = RUNNING;
-		else if (!GetButton(BUTTON_2))
-			dinoState = CRAWLING;
-
-		break;
 	}
 
 // Plant generation
 	if (tick - terrainGenPreTick - plantTick == nextPlantTickDel) {
-		plantHeader = Append(plantHeader, PlantNormal, 96, 59);
+		smallPlantHeader = Append(smallPlantHeader,
+				Random(tick, 0, SmallPlantShrinkStartIndex - 1), 96, 59);
 		nextPlantTickDel = Random(tick, 80, 330);
 		plantTick = tick - terrainGenPreTick;
 	}
@@ -269,7 +288,7 @@ uint8_t GameTick(LS013B4DN04 *display) {
 // Dirt texture generation
 	if (tick - terrainGenPreTick - dirtTexTick == nextDirtTexTickDel) {
 
-		dirtTexHeader = Append(dirtTexHeader, Random(tick, 2, 6), 96,
+		dirtTexHeader = Append(dirtTexHeader, Random(tick, 0, 5), 96,
 				Random(tick, 83, 90));
 
 		nextDirtTexTickDel = Random(tick, 8, 20);
@@ -295,7 +314,7 @@ uint8_t GameTick(LS013B4DN04 *display) {
 		signsHeader = Append(signsHeader, BirdSign, 96, Random(tick, 61, 62));
 	}
 // Bird generation
-	if (tick - birdGenPreTick - birdTick - 200 == nextBirdTickDel) {
+	if (tick - birdGenPreTick - birdTick - 120 == nextBirdTickDel) {
 
 		birdHeader = Append(birdHeader, BirdWithWingsDownwards, 96,
 				Random(tick, 10, 51));
@@ -305,18 +324,18 @@ uint8_t GameTick(LS013B4DN04 *display) {
 	}
 
 // Ground objs shift
-	plantHeader = ShiftX(plantHeader, -1 * overallSpeed);
+	smallPlantHeader = ShiftX(smallPlantHeader, -1 * overallSpeed);
 	dirtTexHeader = ShiftX(dirtTexHeader, -1 * overallSpeed);
 	signsHeader = ShiftX(signsHeader, -1 * overallSpeed);
 	bumpAndDepressionHeader = ShiftX(bumpAndDepressionHeader,
 			-1 * overallSpeed);
-	birdHeader = ShiftX(birdHeader, -1.2 * overallSpeed);
+	birdHeader = ShiftX(birdHeader, -1.4 * overallSpeed);
 
 // Air objs shift
 	cloudHeader = ShiftX(cloudHeader, -0.1 * overallSpeed);
 
 // Cull plant
-	ptr = plantHeader;
+	ptr = smallPlantHeader;
 	for (;;) {
 		if (ptr->full) {
 			for (uint8_t y = 71; y <= 77; y++) {
@@ -324,7 +343,7 @@ uint8_t GameTick(LS013B4DN04 *display) {
 			}
 		}
 		// If looped through all / next buffer is empty
-		if (!ptr->next->full || ptr->next == plantHeader)
+		if (!ptr->next->full || ptr->next == smallPlantHeader)
 			break;
 
 		ptr = ptr->next;
@@ -345,7 +364,7 @@ uint8_t GameTick(LS013B4DN04 *display) {
 	}
 
 	if (dinoState == FIRING) {
-
+		fireHeader->y = dinoHeader->y - 6;
 		UpdateHeaderBmpIndex(fireHeader,
 				(tick / (int) (12 / overallSpeed)) % 2);
 		LCD_LoadObjs(fireHeader, DRAWMODE_ADD, REPEATMODE_NONE, flipStatus);
@@ -355,7 +374,7 @@ uint8_t GameTick(LS013B4DN04 *display) {
 	BirdWithWingsDownwards + (tick / (int) (8 / overallSpeed)) % 2,
 	NoIgnoringIndex);
 
-	LCD_LoadObjs(plantHeader, DRAWMODE_ADD, REPEATMODE_NONE, flipStatus);
+	LCD_LoadObjs(smallPlantHeader, DRAWMODE_ADD, REPEATMODE_NONE, flipStatus);
 	LCD_LoadObjs(birdHeader, DRAWMODE_ADD, REPEATMODE_NONE, flipStatus);
 	LCD_LoadObjs(signsHeader, DRAWMODE_ADD, REPEATMODE_NONE, flipStatus);
 	LCD_LoadObjs(cloudHeader, DRAWMODE_ADD, REPEATMODE_NONE, flipStatus);
@@ -368,7 +387,7 @@ uint8_t GameTick(LS013B4DN04 *display) {
 		goto Dead;
 
 	RenderDino(dinoHeader, dinoState, 0);
-	RenderUI();
+//	RenderUI();
 
 	tick++;
 	LCD_UpdateFull(display);
@@ -402,13 +421,13 @@ uint8_t GameTick(LS013B4DN04 *display) {
 		LCD_DrawLine(77, l, 1, DRAWMODE_CULL, flipStatus);
 		LCD_UpdateLine(display, 77);
 		HAL_Delay(delayTime);
-		if (GetButtonDown(BUTTON_2, 6))
+		if (GetButtonDown(BUTTON_2, 4))
 			break;
 	}
 	return DINO_IS_DEAD;
 }
 
-void RenderUI(){
+void RenderUI() {
 	LCD_Print("gas", 2, 2, DRAWMODE_ADD, REPEATMODE_NONE, flipStatus);
 	LCD_DrawRect(24, 3, 60, 8, DRAWMODE_ADD, flipStatus);
 }
@@ -438,7 +457,9 @@ void RenderDino(GameObj *dino, uint8_t dinoState, bool isDead) {
 			dinoHeader->x = DinoXPosWhenDodging;
 			break;
 		case FIRING:
-			LCD_DrawLine(77, 8, 8, DRAWMODE_CULL, flipStatus);
+			if(dinoHeader->y == dinoGroundPos){
+				LCD_DrawLine(77, 8, 8, DRAWMODE_CULL, flipStatus);
+			}
 			UpdateHeaderBmpIndex(dino,
 			DinoFiringL + (tick / (int) (12 / overallSpeed)) % 2);
 			dinoHeader->x = DinoXPosDefault;
@@ -475,21 +496,23 @@ void RenderDino(GameObj *dino, uint8_t dinoState, bool isDead) {
 
 void MeltPlants() {
 	// Loop through GroundFires and Plants, shrink plants
-	ptr = plantHeader;
+	ptr = smallPlantHeader;
 	for (;;) {
 		if (ptr->full) {
-			if (ptr->index != PlantNormal) {
+			if (ptr->index >= SmallPlantShrinkStartIndex) {
 				if (tick % 6 == 0)
 					ImgIndexRightShift(ptr, 1);
-			} else if (IsOverlapping(24, 52, 95, 76, ptr->x, ptr->y, ptr->x + 9,
+			} else if (IsOverlapping(fireHeader->x, fireHeader->y, 96,
+					fireHeader->y + 24, ptr->x, ptr->y, ptr->x + 9,
 					ptr->y + 21) && dinoState == FIRING) {
-				ImgIndexRightShift(ptr, 1);
+
+				UpdateHeaderBmpIndex(ptr, SmallPlantShrinkStartIndex);
 			}
 
 		}
 
 		// If looped through all / next buffer is empty
-		if (!ptr->next->full || ptr->next == plantHeader) {
+		if (!ptr->next->full || ptr->next == smallPlantHeader) {
 			break;
 		}
 		ptr = ptr->next;
@@ -498,71 +521,71 @@ void MeltPlants() {
 
 bool DinoGetsStuck() {
 // Stuck in plants?
-ptr = plantHeader;
-for (;;) {
-	if (ptr->full && ptr->index == PlantNormal) {
-		switch (dinoState) {
-		case JUMPING:
-		case RUNNING:
-		case FIRING:
-			if (IsOverlapping(dinoHeader->x + 10, dinoHeader->y + 2,
-					dinoHeader->x + 17, dinoHeader->y + 17, ptr->x, 59,
-					ptr->x + 9, 59 + 21)) {
-				return 1;
-			}
-			break;
+	ptr = smallPlantHeader;
+	for (;;) {
+		if (ptr->full && ptr->index < SmallPlantShrinkStartIndex) {
+			switch (dinoState) {
+			case JUMPING:
+			case RUNNING:
+			case FIRING:
+				if (IsOverlapping(dinoHeader->x + 10, dinoHeader->y + 2,
+						dinoHeader->x + 17, dinoHeader->y + 17, ptr->x, 59,
+						ptr->x + 9, 59 + 21)) {
+					return 1;
+				}
+				break;
 
-		case GLIDING:
-		case DODGING:
-		case CRAWLING:
-			if (IsOverlapping(dinoHeader->x + 9, dinoHeader->y + 11,
-					dinoHeader->x + 30, dinoHeader->y + 17, ptr->x, 59,
-					ptr->x + 9, 59 + 21)) {
-				return 1;
+			case GLIDING:
+			case DODGING:
+			case CRAWLING:
+				if (IsOverlapping(dinoHeader->x + 9, dinoHeader->y + 11,
+						dinoHeader->x + 30, dinoHeader->y + 17, ptr->x, 59,
+						ptr->x + 9, 59 + 21)) {
+					return 1;
+				}
+				break;
 			}
+
+		}
+		// If looped through all / next buffer is empty
+		if (!ptr->next->full || ptr->next == smallPlantHeader) {
 			break;
 		}
-
+		ptr = ptr->next;
 	}
-	// If looped through all / next buffer is empty
-	if (!ptr->next->full || ptr->next == plantHeader) {
-		break;
-	}
-	ptr = ptr->next;
-}
 
 // Stuck in birds?
-ptr = birdHeader;
-for (;;) {
-	if (ptr->full) {
-		switch (dinoState) {
-		case JUMPING:
-		case RUNNING:
-		case FIRING:
-			if (IsOverlapping(dinoHeader->x + 10, dinoHeader->y + 2,
-					dinoHeader->x + 17, dinoHeader->y + 17, ptr->x + 2,
-					ptr->y + 3, ptr->x + 14, ptr->y + 12)) {
-				return 1;
-			}
-			break;
+	ptr = birdHeader;
+	for (;;) {
+		if (ptr->full) {
+			switch (dinoState) {
+			case JUMPING:
+			case RUNNING:
+			case FIRING:
+				if (IsOverlapping(dinoHeader->x + 10, dinoHeader->y + 2,
+						dinoHeader->x + 17, dinoHeader->y + 17, ptr->x + 2,
+						ptr->y + 3, ptr->x + 14, ptr->y + 12)) {
+					return 1;
+				}
+				break;
 
-		case GLIDING:
-		case DODGING:
-			if (IsOverlapping(dinoHeader->x + 9, dinoHeader->y + 11,
-					dinoHeader->x + 30, dinoHeader->y + 17, ptr->x + 2,
-					ptr->y + 3, ptr->x + 14, ptr->y + 12)) {
-				return 1;
+			case GLIDING:
+			case DODGING:
+				if (IsOverlapping(dinoHeader->x + 9, dinoHeader->y + 11,
+						dinoHeader->x + 30, dinoHeader->y + 17, ptr->x + 2,
+						ptr->y + 3, ptr->x + 14, ptr->y + 12)) {
+					return 1;
+				}
+				break;
 			}
+
+		}
+		// If looped through all / next buffer is empty
+		if (!ptr->next->full || ptr->next == birdHeader) {
 			break;
 		}
-
+		ptr = ptr->next;
 	}
-	// If looped through all / next buffer is empty
-	if (!ptr->next->full || ptr->next == birdHeader) {
-		break;
-	}
-	ptr = ptr->next;
-}
 
-return 0;
+	return 0;
 }
