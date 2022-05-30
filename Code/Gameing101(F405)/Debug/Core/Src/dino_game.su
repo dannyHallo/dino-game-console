@@ -5,5 +5,5 @@
 ../Core/Src/dino_game.c:379:6:GenerateGameElements	24	static
 ../Core/Src/dino_game.c:441:6:RenderDino	24	static
 ../Core/Src/dino_game.c:503:6:MeltPlants	40	static
-../Core/Src/dino_game.c:531:6:MeltBirds	40	static
-../Core/Src/dino_game.c:558:6:DinoGetsStuck	40	static
+../Core/Src/dino_game.c:532:6:MeltBirds	40	static
+../Core/Src/dino_game.c:560:6:DinoGetsStuck	40	static

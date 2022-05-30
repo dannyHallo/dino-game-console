@@ -508,9 +508,10 @@ void MeltPlants() {
 			if (ptr->currentIndex >= SmallPlantShrinkStartIndex) {
 				if (tick % 6 == 0)
 					ImgIndexRightShift(ptr, 1);
-			} else if (IsOverlapping(fireHeader->transform.position.x,
-					fireHeader->transform.position.y, 96,
-					fireHeader->transform.position.y + 24,
+			} else if (IsOverlapping(fireHeader->transform.position.x + 14,
+					fireHeader->transform.position.y + 9,
+					fireHeader->transform.position.x + 64,
+					fireHeader->transform.position.y + 23,
 					ptr->transform.position.x, ptr->transform.position.y,
 					ptr->transform.position.x + 9,
 					ptr->transform.position.y + 21) && dinoState == FIRING) {
@@ -533,17 +534,18 @@ void MeltBirds() {
 	ptr = birdHeader;
 	for (;;) {
 		if (ptr->isOccupied && ptr->currentIndex != CookedBird) {
-			if (IsOverlapping(fireHeader->transform.position.x,
-					fireHeader->transform.position.y, 96,
-					fireHeader->transform.position.y + 24,
+			if (IsOverlapping(fireHeader->transform.position.x + 14,
+					fireHeader->transform.position.y + 9,
+					fireHeader->transform.position.x + 64,
+					fireHeader->transform.position.y + 23,
 					ptr->transform.position.x, ptr->transform.position.y,
 					ptr->transform.position.x + 18,
 					ptr->transform.position.y + 12) && dinoState == FIRING) {
 
 				UpdateHeaderBmpIndex(ptr, CookedBird);
-				ptr->transform.gravity.y = gravity;
-				ptr->transform.velocity.y = -1;
-				ptr->transform.velocity.x = -0.1;
+				ptr->transform.gravity.y = gravity * 0.8;
+				ptr->transform.velocity.y = -0.5;
+				ptr->transform.velocity.x = -0.2;
 			}
 		}
 
