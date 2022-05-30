@@ -15,57 +15,41 @@ bool IsOverlapping(short x1, short y1, short x2, short y2, short x3, short y3,
 	return true;
 }
 
-bool IsFadedOutOfScene(GameObj *obj) {
-	if (obj->x + obj->width * 8 < 0) {
-		return true;
-	} else {
-		return false;
-	}
-}
-
 // Append buffer in loop, if buffers are all occupied, use the first buffer
-GameObj* Append(GameObj *header, uint8_t index, short xPos, short yPos) {
+void Append(GameObj *header, uint8_t index, float xPos, float yPos, float xVel,
+		float yVel) {
 	GameObj *ptr = header;
 
-	// If the current pointer is occupied, look for the next pos
-	while (ptr->full) {
+// If the current pointer is occupied, look for the next pos
+	while (ptr->isOccupied) {
 		ptr = ptr->next;
 		// Have cycled for a whole loop
 		if (ptr == header) {
-			ptr->bmpAsset = header->bmpAsset;
-			ptr->x = xPos;
-			ptr->y = yPos;
-			ptr->width = header->width;
-			ptr->height = header->height;
-			ptr->assetSize = header->assetSize;
-			ptr->index = index;
-			ptr->full = 1;
-			return header->next;
+			break;
 		}
 	}
 
-	ptr->bmpAsset = header->bmpAsset;
-	ptr->x = xPos;
-	ptr->y = yPos;
-	ptr->width = header->width;
-	ptr->height = header->height;
-	ptr->assetSize = header->assetSize;
-	ptr->index = index;
-	ptr->full = 1;
-	return header;
+	ptr->currentIndex = index;
+	ptr->isOccupied = 1;
+	ptr->transform.position.x = xPos;
+	ptr->transform.position.y = yPos;
+	ptr->transform.velocity.x = xVel;
+	ptr->transform.velocity.y = yVel;
+	ptr->transform.gravity.x = 0;
+	ptr->transform.gravity.y = 0;
 }
 
 void UpdateHeaderBmpIndex(GameObj *header, uint8_t toIndex) {
-	header->index = toIndex;
+	header->currentIndex = toIndex;
 }
 
 void UpdateAllBmpIndexs(GameObj *header, uint8_t toIndex, uint8_t ignoreIndex) {
 	GameObj *ptr = header;
 
-	// If the current pointer is occupied, look for the next pos
+// If the current pointer is occupied, look for the next pos
 	for (;;) {
-		if (ptr->index != ignoreIndex)
-			ptr->index = toIndex;
+		if (ptr->currentIndex != ignoreIndex)
+			ptr->currentIndex = toIndex;
 		ptr = ptr->next;
 
 		// Have cycled for a whole loop
@@ -78,9 +62,9 @@ void UpdateAllBmpIndexs(GameObj *header, uint8_t toIndex, uint8_t ignoreIndex) {
 void DisableAll(GameObj *header) {
 	GameObj *ptr = header;
 
-	// If the current pointer is occupied, look for the next pos
+// If the current pointer is occupied, look for the next pos
 	for (;;) {
-		ptr->full = 0;
+		ptr->isOccupied = 0;
 		ptr = ptr->next;
 
 		// Have cycled for a whole loop
@@ -90,84 +74,110 @@ void DisableAll(GameObj *header) {
 }
 
 // Generate loop buffer given certain size
-GameObj* GenLoopBuf(uint8_t size) {
-	GameObj *head = NULL, *cyclic = NULL;
-	head = (GameObj*) malloc(sizeof(GameObj));
-	head->full = 0;
-	cyclic = head;
-	for (int i = 1; i < size; i++) {
+GameObj* GenLoopBuf(uint8_t *bmpAsset, uint8_t width, uint8_t height,
+		uint8_t assetSize, uint8_t bufferSize) {
+
+	GameObj *header = NULL, *cyclic = NULL;
+	header = (GameObj*) malloc(sizeof(GameObj));
+
+	header->imageProperty.assetSize = assetSize;
+	header->imageProperty.bmpAsset = bmpAsset;
+	header->imageProperty.resolution.x = width;
+	header->imageProperty.resolution.y = height;
+
+	header->currentIndex = 0;
+
+	header->transform.position.x = 0;
+	header->transform.position.y = 0;
+	header->transform.gravity.x = 0;
+	header->transform.gravity.y = 0;
+	header->transform.velocity.x = 0;
+	header->transform.velocity.y = 0;
+
+	header->isOccupied = 0;
+
+	cyclic = header;
+	for (int i = 1; i < bufferSize; i++) {
 		GameObj *body = (GameObj*) malloc(sizeof(GameObj));
-		body->full = 0;
+
+		body->imageProperty.assetSize = assetSize;
+		body->imageProperty.bmpAsset = bmpAsset;
+		body->imageProperty.resolution.x = width;
+		body->imageProperty.resolution.y = height;
+
+		body->currentIndex = 0;
+
+		body->transform.position.x = 0;
+		body->transform.position.y = 0;
+		body->transform.gravity.x = 0;
+		body->transform.gravity.y = 0;
+		body->transform.velocity.x = 0;
+		body->transform.velocity.y = 0;
+
+		body->isOccupied = 0;
+
 		cyclic->next = body;
 		cyclic = body;
 	}
-	cyclic->next = head;
-	return head;
+	cyclic->next = header;
+	return header;
 }
 
-// Initializes the head pointer with the given values, n resets other buffers
-void HeaderInit(GameObj *header, uint8_t *bmpAsset, uint8_t width,
-		uint8_t height, uint8_t assetSize) {
+void CalculatePositions(GameObj *header) {
 	GameObj *ptr = header;
 
-	ptr->bmpAsset = bmpAsset;
-	ptr->x = 0;
-	ptr->y = 0;
-	ptr->width = width;
-	ptr->height = height;
-	ptr->assetSize = assetSize;
-	ptr->index = 0;
-	ptr->full = 0;
+	CalculatePosition(ptr);
 
-	DisableAll(ptr);
-}
-
-// Shift all buffers and return the first active pointer
-GameObj* ShiftX(GameObj *header, float byX) {
-	GameObj *ptr = header;
-
-	// Cycle through all valid buffers once and apply the drift
-	for (;;) {
-		if (ptr->full) {
-			ptr->x += byX;
-		}
-		// Have cycled through the buffer
-		if (!ptr->next->full || ptr->next == header)
-			break;
+	while (ptr->next != header) {
 		ptr = ptr->next;
+		CalculatePosition(ptr);
 	}
-
-	ptr = header;
-	// Return the first available buffer, if no buf is available, return header
-	while (IsFadedOutOfScene(ptr)) {
-		ptr->full = 0;
-		if (!ptr->next->full || ptr->next == header) {
-			break;
-		}
-		ptr = ptr->next;
-	}
-	return ptr;
 }
 
-GameObj* DisableCurrent(GameObj *header) {
-	GameObj *ptr = header;
-	ptr->full = 0;
+void CalculatePosition(GameObj *header) {
 
-//	while (!ptr->next->full) {
+	header->transform.velocity.x += header->transform.gravity.x;
+	header->transform.velocity.y += header->transform.gravity.y;
+
+	header->transform.position.x += header->transform.velocity.x;
+	header->transform.position.y += header->transform.velocity.y;
+}
+
+//// Shift all buffers and return the first active pointer
+//GameObj* ShiftX(GameObj *header, float byX) {
+//	GameObj *ptr = header;
+//
+//	// Cycle through all valid buffers once and apply the drift
+//	for (;;) {
+//		if (ptr->isOccupied) {
+//			ptr->x += byX;
+//		}
+//		// Have cycled through the buffer
+//		if (!ptr->next->isOccupied || ptr->next == header)
+//			break;
 //		ptr = ptr->next;
 //	}
-
-	return ptr;
-}
+//
+//	ptr = header;
+//	// Return the first available buffer, if no buf is available, return header
+//	while (IsFadedOutOfScene(ptr)) {
+//		ptr->isOccupied = 0;
+//		if (!ptr->next->isOccupied || ptr->next == header) {
+//			break;
+//		}
+//		ptr = ptr->next;
+//	}
+//	return ptr;
+//}
 
 void ImgIndexRightShift(GameObj *header, bool disableWhenEnd) {
-	if (header->index < header->assetSize - 1) {
-		header->index++;
+	if (header->currentIndex < header->imageProperty.assetSize - 1) {
+		header->currentIndex++;
 		return;
 	}
 	if (disableWhenEnd) {
-		header->index = 0;
-		DisableCurrent(header);
+		header->currentIndex = 0;
+		header->isOccupied = false;
 	}
 
 }

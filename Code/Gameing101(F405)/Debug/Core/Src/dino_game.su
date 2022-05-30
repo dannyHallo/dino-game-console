@@ -1,7 +1,9 @@
-../Core/Src/dino_game.c:80:6:GenerateGameBuffers	8	static
-../Core/Src/dino_game.c:92:6:GamePrep	24	static
-../Core/Src/dino_game.c:147:9:GameTick	40	static
-../Core/Src/dino_game.c:430:6:RenderUI	16	static
-../Core/Src/dino_game.c:435:6:RenderDino	24	static
-../Core/Src/dino_game.c:497:6:MeltPlants	40	static
-../Core/Src/dino_game.c:522:6:DinoGetsStuck	40	static
+../Core/Src/dino_game.c:81:6:GenerateGameBuffers	16	static
+../Core/Src/dino_game.c:94:6:GamePrep	24	static
+../Core/Src/dino_game.c:140:9:GameTick	32	static
+../Core/Src/dino_game.c:374:6:RenderUI	16	static
+../Core/Src/dino_game.c:379:6:GenerateGameElements	24	static
+../Core/Src/dino_game.c:441:6:RenderDino	24	static
+../Core/Src/dino_game.c:503:6:MeltPlants	40	static
+../Core/Src/dino_game.c:531:6:MeltBirds	40	static
+../Core/Src/dino_game.c:558:6:DinoGetsStuck	40	static

@@ -37,6 +37,19 @@ int modulo(int x, int N) {
 	return (x % N + N) % N;
 }
 
+bool IsFadedOutOfScene(GameObj *obj) {
+	if (obj->transform.position.x + obj->imageProperty.resolution.x * 8 < 0)
+		return true;
+	if (obj->transform.position.x > 96)
+		return true;
+	if (obj->transform.position.y + obj->imageProperty.resolution.y < 0)
+		return true;
+	if (obj->transform.position.y > 96)
+		return true;
+
+	return false;
+}
+
 // Display Initialization
 void LCD_Init(LS013B4DN04 *MemDisp, SPI_HandleTypeDef *Bus,
 		GPIO_TypeDef *dispGPIO, uint16_t LCDcs) {
@@ -128,36 +141,45 @@ void LCD_LoadBuf() {
 	memcpy(DispBuf, DispBuf2, 1152);
 }
 
-void LCD_LoadObjs(GameObj *header, uint8_t drawMode, uint8_t repeatMode,
-		bool flip) {
+void LCD_LoadObjs(GameObj *header, uint8_t drawMode,
+bool flip) {
 	GameObj *ptr = header;
 
-	if (!ptr->full)
-		return;
-
 	for (;;) {
-		LCD_LoadObj(ptr->bmpAsset, ptr->x, ptr->y, ptr->width, ptr->height, drawMode,
-				repeatMode, ptr->index, flip);
+		if (IsFadedOutOfScene(ptr) || !ptr->isOccupied) {
+			ptr->isOccupied = false;
 
-		// If looped through all / next buffer is empty
-		if (!ptr->next->full || ptr->next == header)
+			if (ptr->next == header)
+				return;
+			else {
+				ptr = ptr->next;
+				continue;
+			}
+
+		}
+
+		LCD_LoadObj(ptr->imageProperty.bmpAsset, ptr->transform.position.x,
+				ptr->transform.position.y, ptr->imageProperty.resolution.x,
+				ptr->imageProperty.resolution.y, drawMode, ptr->currentIndex,
+				flip);
+
+		if (ptr->next == header)
 			return;
 		ptr = ptr->next;
 	}
 }
 
 void LCD_LoadObj(uint8_t *bmpAsset, float posX, float posY, uint8_t width,
-		uint8_t height, uint8_t drawMode, uint8_t repeatMode, uint8_t index,
+		uint8_t height, uint8_t drawMode, uint8_t index,
 		bool flip) {
 	short displayRow;
 	short displayRowOffset;
 
 	//Counting from Y origin point to bmpH using for loop
 	for (uint8_t y = 0; y < height; y++) {
-		displayRow = modulo(floor(posY) + y, 96);
+		displayRow = posY + y;
 
-		if ((repeatMode == REPEATMODE_NONE)
-				&& (displayRow < 0 || displayRow >= 96)) {
+		if (displayRow < 0 || displayRow >= 96) {
 			continue;
 		}
 
@@ -175,8 +197,7 @@ void LCD_LoadObj(uint8_t *bmpAsset, float posX, float posY, uint8_t width,
 			else
 				v2 = *(bmpAsset + width * y + j + index * (height * width));
 
-			if (repeatMode == REPEATMODE_NONE
-					&& (firstXByte + j < 0 || firstXByte + j > 11)) {
+			if (firstXByte + j < 0 || firstXByte + j > 11) {
 				v1 = v2;
 				continue;
 			}
@@ -260,11 +281,12 @@ void LCD_DrawLine(uint8_t startingRow, int startingPoint, uint8_t length,
 	}
 }
 
-void LCD_DrawRect(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, uint8_t drawMode, bool flip){
-	if(x1 >= x2 || y1 >= y2)
+void LCD_DrawRect(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2,
+		uint8_t drawMode, bool flip) {
+	if (x1 >= x2 || y1 >= y2)
 		return;
 
-	for(uint8_t currentRow = y1; currentRow <= y2; currentRow++){
+	for (uint8_t currentRow = y1; currentRow <= y2; currentRow++) {
 		LCD_DrawLine(currentRow, x1, x2 - x1 + 1, drawMode, flip);
 	}
 
@@ -330,7 +352,7 @@ void LCD_DrawCircle(short originX, short originY, uint8_t radius,
 }
 
 void LCD_Print(char *str, short xPos, short yPos, uint8_t drawMode,
-		uint8_t repeatMode, bool flip) {
+bool flip) {
 	short strLength = strlen(str);
 	short lineSpacing = 1;
 	short charSpacing = -1;
@@ -356,8 +378,8 @@ void LCD_Print(char *str, short xPos, short yPos, uint8_t drawMode,
 		}
 
 		FetchText(TextBuf, str[i]);
-		LCD_LoadObj(TextBuf, xPos + charOff, yPos + lineOff, 1, 8, drawMode,
-				repeatMode, 0, flip);
+		LCD_LoadObj(TextBuf, xPos + charOff, yPos + lineOff, 1, 8, drawMode, 0,
+				flip);
 		charOff += (8 + charSpacing);
 	}
 }

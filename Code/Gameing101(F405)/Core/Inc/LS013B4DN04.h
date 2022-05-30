@@ -37,17 +37,18 @@ void LCD_LoadFull(uint8_t *BMP);
 void LCD_SaveBuf();
 void LCD_LoadBuf();
 
-void LCD_LoadObjs(GameObj *header, uint8_t drawMode, uint8_t repeatMode,
-		bool flip);
+void LCD_LoadObjs(GameObj *header, uint8_t drawMode,
+bool flip);
 
 void LCD_LoadObj(uint8_t *bmp, float posX, float posY, uint8_t width,
-		uint8_t height, uint8_t drawMode, uint8_t repeatMode, uint8_t index,
+		uint8_t height, uint8_t drawMode, uint8_t index,
 		bool flip);
 
 void LCD_DrawLine(uint8_t startingRow, int startingPoint, uint8_t length,
 		uint8_t drawMode, bool flip);
 
-void LCD_DrawRect(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, uint8_t drawMode, bool flip);
+void LCD_DrawRect(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2,
+		uint8_t drawMode, bool flip);
 
 void LCD_BufClean(void);
 
@@ -58,6 +59,7 @@ void LCD_Fill(bool flip);
 void LCD_DrawCircle(short originX, short originY, uint8_t radius,
 		uint8_t drawMode);
 
-void LCD_Print(char *str, short xPos, short yPos, uint8_t drawMode,
-		uint8_t repeatMode, bool flip);
+void LCD_Print(char *str, short xPos, short yPos, uint8_t drawMode, bool flip);
+
+bool IsFadedOutOfScene(struct GameObj *obj);
 #endif /* INC_LS013B4DN04_H_ */
